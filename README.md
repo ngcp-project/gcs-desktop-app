@@ -1,6 +1,6 @@
-# GCS User Interface
+# Ground Control Station 2025-26
 
-The GCS User Interface for the NGCP project.
+This repository involves the User Interface and Database subteams for the NGCP project.
 
 # Getting Started
 
