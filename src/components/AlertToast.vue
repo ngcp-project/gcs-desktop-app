@@ -16,8 +16,8 @@ const toasterPosition = computed(() => {
 // Position Dismiss All button based on route
 const dismissButtonPosition = computed(() => {
   return route.path === "/" 
-    ? "fixed bottom-4 right-4 z-50"     // Bottom-right for Camera Screen
-    : "fixed bottom-4 left-4 z-50";     // Bottom-left for Overview Screen
+    ? "fixed bottom-4 right-4 z-50"     // Camera Screen
+    : "fixed bottom-4 left-4 z-50";     // Overview Screen
 });
 
 // --------- Listen for Alert Events --------- //
@@ -71,7 +71,7 @@ listen("dismiss-all-toasts", () => {
   </Button>
 
   <!-- ========================================= -->
-  <!-- Testing Buttons - Remove in production   -->
+  <!-- Testing Buttons - Remove in Demo   -->
   <!-- ========================================= -->
   
   <!-- --------- Errors --------- -->
@@ -162,6 +162,8 @@ listen("dismiss-all-toasts", () => {
 -->
 </template>
 
+
+<!-- Toast offset and reduction in size -->
 <style scoped>
 /* Offset toasts from bottom only, without affecting horizontal position */
 :deep([data-sonner-toaster]) {
@@ -170,8 +172,8 @@ listen("dismiss-all-toasts", () => {
 
 /* Make toasts smaller */
 :deep([data-sonner-toast]) {
-  max-width: 320px !important;      /* Reduce width (default is ~356px) */
-  padding: 12px !important;          /* Reduce padding (default is ~16px) */
+  max-width: 320px !important;      /* Reduce width (default is 356px) */
+  padding: 12px !important;          /* Reduce padding (default is 16px) */
   font-size: 0.875rem !important;   /* Smaller font size (14px) */
 }
 

@@ -52,9 +52,7 @@ const calculateDistance = (
   return R * c * 5280; // Convert to feet
 };
 
-/**
- * Emit an alert toast if not already active
- */
+// Emit an alert toast if not already active 
 const emitAlert = (
   vehicle: string,
   type: string,
@@ -80,9 +78,7 @@ const emitAlert = (
   }
 };
 
-/**
- * Clear an alert and dismiss its toast
- */
+// Clear an alert and dismiss its toast 
 const clearAlert = (vehicle: string, type: string): void => {
   const alertKey = getAlertKey(vehicle, type);
 
@@ -100,9 +96,7 @@ const clearAlert = (vehicle: string, type: string): void => {
 // Alert Condition Checkers
 // ============================================
 
-/**
- * Check signal strength for a vehicle
- */
+// Check signal strength for a vehicle 
 const checkSignalStrength = (
   vehicle: string,
   signalStrength: number
@@ -120,9 +114,7 @@ const checkSignalStrength = (
   }
 };
 
-/**
- * Check connection status for a vehicle
- */
+// Check connection status for a vehicle 
 const checkConnectionStatus = (
   vehicle: string,
   vehicleStatus: string
@@ -151,9 +143,7 @@ const checkConnectionStatus = (
   }
 };
 
-/**
- * Check battery level for a vehicle
- */
+// Check battery level for a vehicle 
 const checkBatteryLevel = (vehicle: string, batteryLife: number): void => {
   if (batteryLife < ALERT_THRESHOLDS.LOW_BATTERY) {
     emitAlert(
@@ -168,9 +158,7 @@ const checkBatteryLevel = (vehicle: string, batteryLife: number): void => {
   }
 };
 
-/**
- * Check geo-fence status for a vehicle
- */
+// Check geo-fence status for a vehicle 
 const checkGeoFenceStatus = (
   vehicle: string,
   vehicleStatus: string
@@ -188,9 +176,7 @@ const checkGeoFenceStatus = (
   }
 };
 
-/**
- * Check proximity between two vehicles
- */
+// Check proximity between two vehicles
 const checkVehicleProximity = (
   vehicle1: string,
   lat1: number,
@@ -284,16 +270,16 @@ export const checkAlerts = (
   }
 };
 
-/** Get the current set of active alerts */
+// Get the current set of active alerts 
 export const getActiveAlerts = (): string[] => {
   return Array.from(activeAlerts);
 };
 
-/** Clear all active alerts */
+// Clear all active alerts 
 export const clearAllAlerts = (): void => {
   activeAlerts.forEach((alertKey) => {
     emit("dismiss-toast", { id: alertKey });
   });
   activeAlerts.clear();
-  console.log("🔄 All alerts cleared");
+  console.log("All alerts cleared");
 };
