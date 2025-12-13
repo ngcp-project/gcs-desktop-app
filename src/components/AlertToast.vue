@@ -42,10 +42,12 @@ listen("create-toast", (event) => {
 listen("dismiss-toast", (event) => {
   const { id } = event.payload as { id: string };
   toast.dismiss(id);
+  console.log(`Alert cleared: ${id}`);
 });
 
 listen("dismiss-all-toasts", () => {
   toast.dismiss();
+  console.log(`All toast cleared`);
 });
 </script>
 

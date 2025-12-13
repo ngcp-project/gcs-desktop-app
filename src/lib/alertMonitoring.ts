@@ -5,8 +5,8 @@ import type { VehicleTelemetryData } from "./bindings";
 // Configuration
 // ============================================
 
-// Track active alerts to prevent duplicates
-const activeAlerts = new Set<string>();
+// Track active alerts with their last update timestamp
+const activeAlerts = new Map<string, number>();
 
 // Configurable thresholds
 export const ALERT_THRESHOLDS = {
@@ -14,6 +14,9 @@ export const ALERT_THRESHOLDS = {
   LOW_BATTERY: 20,
   PROXIMITY: 100, // feet
 };
+
+// Minimum time between alert updates (in milliseconds) preventing excessive toast updates for same alert
+const ALERT_UPDATE_DEBOUNCE = 3000; // 3 seconds, toggle for different 
 
 // ============================================
 // Helper Functions
@@ -52,7 +55,7 @@ const calculateDistance = (
   return R * c * 5280; // Convert to feet
 };
 
-// Emit an alert toast if not already active 
+// Emit or update an alert toast 
 const emitAlert = (
   vehicle: string,
   type: string,
@@ -61,12 +64,17 @@ const emitAlert = (
   description: string
 ): void => {
   const alertKey = getAlertKey(vehicle, type);
+  const now = Date.now();
+  const lastUpdate = activeAlerts.get(alertKey);
 
-  // Only emit if not already active (prevents duplicates)
-  if (!activeAlerts.has(alertKey)) {
-    activeAlerts.add(alertKey);
+  // Check if we should update the alert
+  const shouldUpdate = !lastUpdate || (now - lastUpdate) >= ALERT_UPDATE_DEBOUNCE;
 
-    // Use the alert key as the toast ID for consistency
+  if (shouldUpdate) {
+    // Update the timestamp
+    activeAlerts.set(alertKey, now);
+
+    // Emit the toast (will update if it already exists due to same ID)
     emit("create-toast", {
       id: alertKey,
       type: severity,
@@ -74,11 +82,16 @@ const emitAlert = (
       description,
     });
 
-    console.log(`Alert emitted: ${alertKey}`);
+    if (!lastUpdate) {
+      console.log(`Alert emitted: ${alertKey}`);
+    } else {
+      console.log(`Alert updated: ${alertKey}`);
+    }
   }
+  // If not enough time has passed, silently skip (prevents spam)
 };
 
-// Clear an alert and dismiss its toast 
+// Clear an alert and dismiss its toast
 const clearAlert = (vehicle: string, type: string): void => {
   const alertKey = getAlertKey(vehicle, type);
 
@@ -96,7 +109,7 @@ const clearAlert = (vehicle: string, type: string): void => {
 // Alert Condition Checkers
 // ============================================
 
-// Check signal strength for a vehicle 
+// Check signal strength for a vehicle
 const checkSignalStrength = (
   vehicle: string,
   signalStrength: number
@@ -143,7 +156,7 @@ const checkConnectionStatus = (
   }
 };
 
-// Check battery level for a vehicle 
+// Check battery level for a vehicle
 const checkBatteryLevel = (vehicle: string, batteryLife: number): void => {
   if (batteryLife < ALERT_THRESHOLDS.LOW_BATTERY) {
     emitAlert(
@@ -158,7 +171,7 @@ const checkBatteryLevel = (vehicle: string, batteryLife: number): void => {
   }
 };
 
-// Check geo-fence status for a vehicle 
+// Check geo-fence status for a vehicle
 const checkGeoFenceStatus = (
   vehicle: string,
   vehicleStatus: string
@@ -270,14 +283,14 @@ export const checkAlerts = (
   }
 };
 
-// Get the current set of active alerts 
+// Get the current set of active alerts
 export const getActiveAlerts = (): string[] => {
-  return Array.from(activeAlerts);
+  return Array.from(activeAlerts.keys());
 };
 
-// Clear all active alerts 
+// Clear all active alerts
 export const clearAllAlerts = (): void => {
-  activeAlerts.forEach((alertKey) => {
+  activeAlerts.forEach((timestamp, alertKey) => {
     emit("dismiss-toast", { id: alertKey });
   });
   activeAlerts.clear();
