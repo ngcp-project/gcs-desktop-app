@@ -1,4 +1,4 @@
-# Ground Control Station 2025-26
+# Ground Control Station Desktop Application
 
 This repository involves the User Interface and Database subteams for the NGCP project.
 
