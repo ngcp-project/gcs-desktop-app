@@ -111,7 +111,7 @@ export type { Coordinate, Vehicle, Stage };
 
 <template>
   <!-- Toast testing bar -->
-  <div class="fixed bottom-0 z-50 flex max-w-md items-center justify-center gap-3 pb-3">
+  <div class="fixed bottom-0 z-50 flex w-full items-center justify-center gap-3 pb-3">
      <AlertToast/>
   </div>
 

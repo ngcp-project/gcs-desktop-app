@@ -267,20 +267,6 @@ export const checkAlerts = (
       telemetryState.MRA.current_position.longitude
     );
   }
-
-  if (
-    telemetryState.MEA?.current_position &&
-    telemetryState.MRA?.current_position
-  ) {
-    checkVehicleProximity(
-      "MEA",
-      telemetryState.MEA.current_position.latitude,
-      telemetryState.MEA.current_position.longitude,
-      "MRA",
-      telemetryState.MRA.current_position.latitude,
-      telemetryState.MRA.current_position.longitude
-    );
-  }
 };
 
 // Get the current set of active alerts

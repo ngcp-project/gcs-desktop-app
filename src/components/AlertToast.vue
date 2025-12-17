@@ -13,13 +13,6 @@ const toasterPosition = computed(() => {
   return route.path === "/" ? "bottom-right" : "bottom-left"; // '/' is the route of StaticScreen
 });
 
-// Position Dismiss All button based on route
-const dismissButtonPosition = computed(() => {
-  return route.path === "/" 
-    ? "fixed bottom-4 right-4 z-50"     // Camera Screen
-    : "fixed bottom-4 left-4 z-50";     // Overview Screen
-});
-
 // --------- Listen for Alert Events --------- //
 // These events are emitted by alertMonitoring.ts when alert conditions are detected
 
@@ -52,101 +45,83 @@ listen("dismiss-all-toasts", () => {
 </script>
 
 <template>
-  <Toaster 
-    richColors 
-    :position="toasterPosition"
-  />
-
-  <!-- ========================================= -->
-  <!-- Dismiss All Button - Positioned by Route -->
-  <!-- ========================================= -->
-  <Button
-    :class="dismissButtonPosition"
-    variant="outline"
-    @click="
-      () => {
-        emit('dismiss-all-toasts');
-      }
-    "
-  >
-    Dismiss All
-  </Button>
-
-  <!-- ========================================= -->
-  <!-- Testing Buttons - Remove in Demo   -->
-  <!-- ========================================= -->
+  <Toaster
+   richColors 
+  :position="toasterPosition"
+   />
+   <!-- Testing Buttons - Positioned at bottom -->
   
-  <!-- --------- Errors --------- -->
-   <!--
-  <Button
-    variant="outline"
-    @click="
-      () => {
-        emit('create-toast', {
-          id: 'test_connection_error',
-          type: 'error',
-          title: 'Error: Connection Failure',
-          description: 'Unable to connect to ERU (test)'
-        });
-      }
-    "
-  >
-    Test Connection Error
-  </Button>
-
-  <Button
-    variant="outline"
-    @click="
-      () => {
-        emit('create-toast', {
-          id: 'test_abnormal_status',
-          type: 'error',
-          title: 'Error: Abnormal Status',
-          description: 'Abnormal MEA status (low battery) (test)'
-        });
-      }
-    "
-  >
-    Test Abnormal Status Error
+    <!-- --------- Errors --------- -->
     
-  </Button>
-  -->
+    <Button
+      variant="outline"
+      @click="
+        () => {
+          emit('create-toast', {
+            id: 'test_connection_error',
+            type: 'error',
+            title: 'Error: Connection Failure',
+            description: 'Unable to connect to ERU (test)'
+          });
+        }
+      "
+    >
+      Connection Error
+    </Button>
 
-  <!-- --------- Warnings --------- -->
-   <!--
-  <Button
-    variant="outline"
-    @click="
-      () => {
-        emit('create-toast', {
-          id: 'test_signal_integrity',
-          type: 'warning',
-          title: 'Warning: Signal Integrity',
-          description: 'Weak signal integrity/connection lost to MRA (test)'
-        });
-      }
-    "
-  >
-    Test Signal Integrity Warning
-  </Button>
+    <Button
+      variant="outline"
+      @click="
+        () => {
+          emit('create-toast', {
+            id: 'test_abnormal_status',
+            type: 'error',
+            title: 'Error: Abnormal Status',
+            description: 'Abnormal MEA status (low battery) (test)'
+          });
+        }
+      "
+    >
+      Abnormal Status Error
+   
+    </Button>
 
-  <Button
-    variant="outline"
-    @click="
-      () => {
-        emit('create-toast', {
-          id: 'test_keep_out',
-          type: 'warning',
-          title: 'Warning: Keep-Out Zone',
-          description: 'ERU within 500 ft of keep-out zone (test)'
-        });
-      }
-    "
-  >
-    Test Keep-Out Warning
-  </Button>
 
-  <Button
+    <!-- --------- Warnings --------- -->
+
+    <Button
+      variant="outline"
+      @click="
+        () => {
+          emit('create-toast', {
+            id: 'test_signal_integrity',
+            type: 'warning',
+            title: 'Warning: Signal Integrity',
+            description: 'Weak signal integrity/connection lost to MRA (test)'
+          });
+        }
+      "
+    >
+      Signal Integrity Warning
+    </Button>
+
+    <Button
+      variant="outline"
+      @click="
+        () => {
+          emit('create-toast', {
+            id: 'test_keep_out',
+            type: 'warning',
+            title: 'Warning: Keep-Out Zone',
+            description: 'ERU within 500 ft of keep-out zone (test)'
+          });
+        }
+      "
+    >
+      Keep-Out Warning
+    </Button>
+
+    <Button
     variant="outline"
     @click="
       () => {
@@ -159,9 +134,21 @@ listen("dismiss-all-toasts", () => {
       }
     "
   >
-    Test Proximity Warning
+  Proximity Warning
   </Button>
--->
+
+    <!-- --------- Dismiss All --------- -->
+    <Button
+      variant="outline"
+      @click="
+        () => {
+          emit('dismiss-all-toasts');
+        }
+      "
+    >
+      Dismiss All
+    </Button>
+
 </template>
 
 
