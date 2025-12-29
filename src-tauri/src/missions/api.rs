@@ -8,6 +8,7 @@ use tokio::sync::Mutex;
 use serde_json::Value;
 use crate::commands::CommandsApi;
 use crate::commands::commands::{CommandsApiImpl, GeoCoordinate};
+use crate::telemetry::geos::{KEEP_OUT_ZONES};
 
 /*==============================================================================
  * MissionApiImpl Structure and Default Implementation
@@ -262,6 +263,15 @@ impl MissionApiImpl {
                                 .collect(),
                     },
                 });
+                // Populate runtime KEEP_OUT_ZONES map from persisted mission keep_out_zones
+                {
+                    // use crate::telemetry::geos::KEEP_OUT_ZONES;
+                    let mission_ref = initial_state.missions.last().unwrap();
+                    let mission_keepouts = mission_ref.zones.keep_out_zones.clone();
+
+                    let mut map = KEEP_OUT_ZONES.write().expect("Failed to acquire write lock");
+                    map.insert(mission_ref.mission_id, mission_keepouts);
+                }
             }
         } 
 
@@ -536,6 +546,9 @@ impl MissionApi for MissionApiImpl {
             .expect("Failed to delete mission from database");
 
         state.missions.remove(mission_index);
+        // remove from the hashmap
+        let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire lock");
+        keep_out_zones.remove(&mission_id);
         self.emit_state_update(&app_handle, &state)
     }
 
@@ -978,8 +991,18 @@ impl MissionApi for MissionApiImpl {
             .ok_or("Mission not found")?;
 
         match zone_type {
-            ZoneType::KeepIn => mission.zones.keep_in_zones.push(GeofenceType::default()),
-            ZoneType::KeepOut => mission.zones.keep_out_zones.push(GeofenceType::default()),
+            ZoneType::KeepIn => {
+                mission.zones.keep_in_zones.push(GeofenceType::default());
+            }
+            ZoneType::KeepOut => {
+                // add an empty keep-out zone in mission state
+                mission.zones.keep_out_zones.push(GeofenceType::default());
+                // // ensure an entry exists in KEEP_OUT_ZONES for this mission (push an empty polygon)
+                // let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire write lock");
+                // let key = mission.mission_id;
+                // keep_out_zones.entry(key).or_default().push(Vec::new());
+                // println!("THIS IS A BIGGGG TEXT {:?}", keep_out_zones);
+            }
         }
 
         // note: no need for SQL here since its just an empty zone be changed in the rust state
@@ -1014,7 +1037,13 @@ impl MissionApi for MissionApiImpl {
                 // if zone_index >= mission.zones.keep_out_zones.len() as u32 {
                 //     return Err("KeepOut index out of range".into());
                 // }
-                mission.zones.keep_out_zones[zone_index as usize] = zone_coords;
+                mission.zones.keep_out_zones[zone_index as usize] = zone_coords.clone();
+                let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire write lock");
+                let key = mission.mission_id;
+                keep_out_zones.entry(key).or_default().push(zone_coords);
+                println!("Updated structuret to showcase {:?}", keep_out_zones);
+                // send that struct to be used in 
+
             }
         }
 
@@ -1075,6 +1104,17 @@ impl MissionApi for MissionApiImpl {
                     return Err("KeepOut index out of range".into());
                 }
                 mission.zones.keep_out_zones.remove(zone_index as usize);
+
+                let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire locks");
+                let key = mission.mission_id;
+                // let coords = zone_coords
+                //     .iter()
+                //     .map(|gc| Coordinate { latitude: gc.lat, longitude: gc.long })
+                //     .collect::<Vec<Coordinate>>();
+                // keep_out_zones.entry(key).or_default().push(coords);
+                // remove certain vector by checking its zone_index from certain key;
+                keep_out_zones.entry(key).or_default().remove(zone_index as usize);
+                println!("Updated structuret to showcase {:?}", keep_out_zones);
             }
         }
 

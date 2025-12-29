@@ -1,6 +1,6 @@
-use crate::telemetry::geos;
+// use crate::telemetry::geos;
 use crate::telemetry::geos::*;
-
+use crate::missions::types::GeoCoordinateStruct;
 use crate::telemetry::types::{TelemetryData, VehicleTelemetryData};
 use futures_util::stream::StreamExt;
 use lapin::{
@@ -352,13 +352,14 @@ impl RabbitMQAPIImpl {
                         }
 
                         // Existing geo-fencing check
-                        let point = geos::Coordinate {
-                            latitude: data.current_position.latitude,
-                            longitude: data.current_position.longitude,
+                        let point = GeoCoordinateStruct {
+                            lat: data.current_position.latitude,
+                            long: data.current_position.longitude,
                         };
-
-                        if is_near_keep_out_zone(&data.vehicle_id, &point, 1000.0) {
+                        
+                        if is_near_keep_out_zone(2, &point, 2000.0) {
                             data.vehicle_status = "Approaching restricted area".to_string();
+                            print!("APPROACHING A BIG PROBLEM {}", data.vehicle_status)
                         }
 
                         // If vehicle was marked as disconnected but we're receiving data,

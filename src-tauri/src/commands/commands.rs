@@ -80,7 +80,7 @@ impl CommandsApi for CommandsApiImpl {
 }
 
 impl CommandsApiImpl {
-    async fn publish_command_to_rabbitmq(&self, command: &CommandsStruct) -> Result<(), String> {
+    async fn publish_command_to_rabbitmq(&self,command: &CommandsStruct) -> Result<(), String> {
         // 1) Use %2f to select the "/" vhost
         let addr = std::env::var("AMQP_ADDR")
             .unwrap_or_else(|_| "amqp://admin:admin@localhost:5672/%2f".into());
