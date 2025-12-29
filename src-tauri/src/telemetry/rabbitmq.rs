@@ -359,7 +359,7 @@ impl RabbitMQAPIImpl {
                         
                         if is_near_keep_out_zone(2, &point, 2000.0) {
                             data.vehicle_status = "Approaching restricted area".to_string();
-                            print!("APPROACHING A BIG PROBLEM {}", data.vehicle_status)
+                            print!("Current status: {}", data.vehicle_status)
                         }
 
                         // If vehicle was marked as disconnected but we're receiving data,
