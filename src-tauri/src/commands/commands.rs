@@ -18,10 +18,13 @@ pub struct GeoCoordinate {
 #[derive(Debug, Deserialize, Serialize, Clone, Type)]
 pub struct CommandsStruct {
     pub vehicle_id: String,
-    pub commandID: i32,
+    // pub command_ID
+    pub command_id: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub coordinates: Option<Vec<GeoCoordinate>>,
 }
+
+    // Expects: { "vehicle_name": str, "command_id": int, "value": ... }
 
 type SharedCommands = Arc<Mutex<CommandsStruct>>;
 
@@ -42,7 +45,7 @@ impl Default for CommandsApiImpl {
         Self {
             state: Arc::new(Mutex::new(CommandsStruct {
                 vehicle_id: "default".to_string(),
-                commandID: 0,
+                command_id: 0,
                 coordinates: None,
             })),
         }
@@ -54,7 +57,7 @@ impl CommandsApi for CommandsApiImpl {
     async fn send_emergency_stop(self, vehicle_id: String) -> Result<(), String> {
         let mut state = self.state.lock().await;
         state.vehicle_id = vehicle_id;  // This will be "ALL" for all vehicles or specific vehicle name
-        state.commandID = 1; // Emergency stop command ID
+        state.command_id = 1; // Emergency stop command ID
         state.coordinates = None;
         self.publish_command_to_rabbitmq(&state).await?;
         Ok(())
@@ -63,7 +66,7 @@ impl CommandsApi for CommandsApiImpl {
     async fn send_mission_update(self, vehicle_id: String, mission_id: String) -> Result<(), String> {
         let mut state = self.state.lock().await;
         state.vehicle_id = vehicle_id;
-        state.commandID = mission_id.parse().unwrap_or(0);
+        state.command_id = mission_id.parse().unwrap_or(0);
         state.coordinates = None;
         self.publish_command_to_rabbitmq(&state).await?;
         Ok(())
@@ -72,7 +75,7 @@ impl CommandsApi for CommandsApiImpl {
     async fn send_zone_update(self, vehicle_id: String, zone_id: String, coordinates: Vec<GeoCoordinate>) -> Result<(), String> {
         let mut state = self.state.lock().await;
         state.vehicle_id = vehicle_id;
-        state.commandID = zone_id.parse().unwrap_or(0);
+        state.command_id = zone_id.parse().unwrap_or(0);
         state.coordinates = Some(coordinates);
         self.publish_command_to_rabbitmq(&state).await?;
         Ok(())

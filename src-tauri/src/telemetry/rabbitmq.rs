@@ -16,6 +16,7 @@ use taurpc;
 use tokio::sync::Mutex;
 use tokio::time::{interval, sleep};
 use tokio_amqp::*;
+use crate::missions::api::LAST_STATE;
 
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use super::sql::*;
@@ -357,9 +358,10 @@ impl RabbitMQAPIImpl {
                             long: data.current_position.longitude,
                         };
                         
-                        if is_near_keep_out_zone(2, &point, 2000.0) {
+                        let mut last_mission = *LAST_STATE.lock().await;
+                        if is_near_keep_out_zone(last_mission , &point, 2000.0) {
                             data.vehicle_status = "Approaching restricted area".to_string();
-                            print!("Current status: {}", data.vehicle_status)
+                            print!("Current status:  {}", data.vehicle_status)
                         }
 
                         // If vehicle was marked as disconnected but we're receiving data,

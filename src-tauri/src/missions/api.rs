@@ -1,6 +1,7 @@
 use super::sql::*;
 use super::types::*;
 use std::sync::Arc;
+// use std::sync::Mutex;
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use tauri::{AppHandle, Runtime};
 use taurpc;
@@ -20,6 +21,10 @@ pub struct MissionApiImpl {
     state: Arc<Mutex<MissionsStruct>>,
     db: PgPool,
 }
+// store the last state mission in a global variable
+// by default is -1
+pub static LAST_STATE: Mutex<i32> = Mutex::const_new(-1);
+
 
 /*==============================================================================
  * MissionApiImpl Methods
@@ -79,6 +84,10 @@ impl MissionApiImpl {
                 // Set current mission ID if a mission has a status of "Active"
                 if mission[0].try_get::<String, _>("status").unwrap_or_else(|_| "Inactive".to_string()) == "Active" {
                     initial_state.current_mission = mission_id;
+                    let mut last_state = LAST_STATE.lock().await;
+                    *last_state = mission_id;
+        
+
                 }
 
                 let mea_row = mission.iter()

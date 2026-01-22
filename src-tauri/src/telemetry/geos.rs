@@ -1,5 +1,4 @@
 use lazy_static::lazy_static;
-use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::RwLock;
 use crate::missions::types::*;
@@ -13,16 +12,20 @@ lazy_static! {
 
 fn harversine_distance(a: &GeoCoordinateStruct, b: &GeoCoordinateStruct) -> f64 {
     let r = 6371000.0;
+    // Convert the difference in radians
+    // degrees -> radians sample: 15 * pi/180-> pi/12
     let dlat = (b.lat - a.lat).to_radians();
     let dlon = (b.long - a.long).to_radians();
-
+    
     let lat1 = a.lat.to_radians();
     let lat2 = b.lat.to_radians();
 
+    // Intermediate value "a" ->  harvesine of the central angle
     let a = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
+    // Central angle
     let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
-
-    r * c
+    // return distance
+     r * c
 }
 
 pub fn is_near_keep_out_zone(mission_id: i32 , point: &GeoCoordinateStruct, threshold_m: f64) -> bool {
@@ -32,11 +35,12 @@ pub fn is_near_keep_out_zone(mission_id: i32 , point: &GeoCoordinateStruct, thre
         "Current position: ({}, {})",
         point.lat, point.long
     );
-    
+        
         if let Some(polygons) = zones.get(&mission_id) {
+            // provide owner reference, borrowed 
             for polygon in polygons.iter() {
                 for coord in polygon.iter() {
-                    let dist = harversine_distance(point, coord);
+                    let dist = harversine_distance(point,   coord);
                     if dist <= threshold_m {
                         return true;
                     }
