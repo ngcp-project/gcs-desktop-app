@@ -3,6 +3,7 @@ import { missionPiniaStore } from "./MissionStore";
 import { mapPiniaStore } from "./MapStore";
 import { telemetryPiniaStore } from "./TelemetryStore";
 import { VehicleTelemetryData } from "./bindings";
+import { checkAlerts } from "./alertMonitoring"; 
 
 //Declare store variables:
 let missionStore: ReturnType<typeof missionPiniaStore>;
@@ -16,9 +17,9 @@ export const establishTaurpcConnection = () => {
   mapStore = mapPiniaStore();
   telemetryStore = telemetryPiniaStore();
 
-// ===============================================
-// Backend Event Listeners
-// ===============================================
+  // ===============================================
+  // Backend Event Listeners
+  // ===============================================
   const taurpc = createTauRPCProxy();
   taurpc.mission.get_all_missions().then((data) => {
     console.log("PINIA: Mission data fetched:", data);
@@ -40,18 +41,23 @@ export const establishTaurpcConnection = () => {
     console.log("PINIA: Telemetry data received", data);
     telemetryStore.syncRustState(data);
   });
-  
+
   taurpc.telemetry.on_updated.on((data: VehicleTelemetryData) => {
     console.log("PINIA: Telemetry data updated", data);
     telemetryStore.syncRustState(data);
   });
-  
+
   // =============================================
   // Subscriptions
   // =============================================
-  //Per every update of missionStore, update mapStore.
+//Per every update of missionStore, update mapStore.
   missionStore.$subscribe((mutation, state) => {
     mapStore.updateLayerTracking(state.missionState as MissionsStruct);
+  });
+
+  //Per every update of telemetryStore, check for alert conditions
+  telemetryStore.$subscribe((mutation, state) => {
+    checkAlerts(state.telemetryState);
   });
 };
 // ===============================================
@@ -65,7 +71,7 @@ export const establishTaurpcConnection = () => {
 //   if (movementInterval) {
 //     clearInterval(movementInterval);
 //   }
-  
+
 //   movementInterval = setInterval(() => {
 //     telemetryStore.simulateMovement();
 //   }, 5000); // Update every 5 seconds
