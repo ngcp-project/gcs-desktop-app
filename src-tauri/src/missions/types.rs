@@ -1,3 +1,6 @@
+/*
+Define all mission-related data types shared with the frontend (missions, vehicles, stages, zones, enums, coordinate types).
+*/
 use std::{num::ParseFloatError, str::FromStr};
 
 #[taurpc::ipc_type]
