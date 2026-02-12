@@ -7,8 +7,8 @@
   
   interface WeatherData {
     overcast: string,
-    wind: string,
-    rain: string
+    wind: number,
+    rain: number
   }
   
   /* 
@@ -22,8 +22,8 @@
   */
  const mockWeatherData: WeatherData = {
    overcast: "sunny",
-   wind: "strong",
-   rain: "heavy"
+   wind: 5,
+   rain: 5
   }; //get from state manager
   const levels = {
     light: "black",
@@ -33,21 +33,21 @@
   
   //compute appropriate color
   let overcastStatus = mockWeatherData.overcast == ("sunny") ? levels.light : levels.severe;
-  let windStatus  = mockWeatherData.wind == ("strong") ? levels.moderate : levels.severe;
-  let rainStatus = mockWeatherData.rain == ("heavy") ? levels.severe : levels.severe;
+  let windStatus  = mockWeatherData.wind == (5) ? levels.moderate : levels.severe;
+  let rainStatus = mockWeatherData.rain == (5) ? levels.severe : levels.severe;
   const weatherStyles = "flex items-center gap-1";
 </script>
 <template>
   <Card class="m-2 h-fit bg-sidebar-foreground p-2 text-foreground">
     <CardContent class="mt-1 flex flex-col items-start space-y-3">
       <div :class=weatherStyles>
-          <Overcast :color="overcastStatus"/> placeholder
+          <Overcast :color="overcastStatus"/> {{ mockWeatherData.overcast }}
       </div>
       <div :class=weatherStyles>
-          <Wind :color="windStatus"/> placeholder MPH
+          <Wind :color="windStatus"/> {{ mockWeatherData.wind }} mph
       </div>
       <div :class=weatherStyles>
-        <Rain :color="rainStatus"/> placeholder
+        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }}%
       </div>
     </CardContent>
   </Card>
