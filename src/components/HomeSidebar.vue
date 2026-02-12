@@ -39,7 +39,7 @@ defineProps<{
           :airspeed="vehicle.airspeed"
         />
       </div>
+      <WeatherCard />
     </SidebarContent>
-    <WeatherCard />
   </Sidebar>
 </template>
