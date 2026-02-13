@@ -18,10 +18,13 @@
     Wind      | 0 mph -> idk mph
     Rain      | no rain -> heavy rain
   */
+
+  // The system SHALL be able to operate in weather conditions consisting of sunny to overcast, no rain to light rain (0.02 inch per hour), no wind to winds up to 10 mph
+  
  const mockWeatherData: WeatherData = {
    overcast: "sunny",
-   wind: 5, //mph
-   rain: 5 // in/h
+   wind: 0, //mph
+   rain: 0.00 // in/h
   }; //get from state manager
   const levels = {
     light: "black",
@@ -45,7 +48,7 @@
           <Wind :color="windStatus"/> {{ mockWeatherData.wind }} mph
       </div>
       <div :class=weatherStyles>
-        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }}in/h
+        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }} in/h
       </div>
     </CardContent>
   </Card>
