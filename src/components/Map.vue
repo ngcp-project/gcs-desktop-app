@@ -8,7 +8,7 @@
       :center="[mapStore.mapState.mapOrigin[0] as LatLng[0], mapStore.mapState.mapOrigin[1] as LatLng[1]]"
       @ready="handleReady"
     >
-      <GeomanController id="mapDebug" />
+      <GeomanController v-if="mapDebugEnabled()" />
       <l-tile-layer
         :url="mapStore.mapState.localTileURL"
         :minZoom="14"
@@ -46,17 +46,6 @@ import MRAIcon from "@/assets/MRA.png";
 const mapRef = ref<LeafletMapGeoman | null>(null);
 const handleReady = () => {
   mapStore.updateMapRef(mapRef.value);
-
-  // Hide map debugging buttons if not enabled
-  const mapDebugEnabled = JSON.parse(import.meta.env.VITE_MAP_DEBUG || "false"); // Parse into JSON to convert string to bool
-  console.log("MAP DEBUG: " + mapDebugEnabled);
-  console.log("Type: " + typeof(mapDebugEnabled));
-  if (!mapDebugEnabled) {
-    let mapDebugEl = document.getElementById("mapDebug");
-    if (mapDebugEl) {
-      mapDebugEl.setAttribute("style", "display: none");
-    }
-  }
 };
 
 // Function to get vehicle-specific icon
@@ -74,6 +63,9 @@ const getVehicleIcon = (vehicle: VehicleEnum) => {
   });
 };
 
+function mapDebugEnabled() {
+  return JSON.parse(import.meta.env.VITE_MAP_DEBUG || 'false'); // Parse into JSON to convert string to bool
+}
 </script>
 
 <style>
