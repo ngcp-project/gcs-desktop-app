@@ -1,3 +1,6 @@
+/*
+Define all mission-related database functions (mission CRUD, vehicle selection and auto-mode, stage CRUD and transition, zone updates).
+*/
 use sqlx::{query, PgPool, Row};
 
 pub async fn insert_new_mission(
