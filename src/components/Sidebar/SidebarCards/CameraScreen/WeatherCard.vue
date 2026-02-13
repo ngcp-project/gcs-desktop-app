@@ -12,18 +12,16 @@
   }
   
   /* 
-  Component | Chill (black) -> moderate (Orange) -> Severe (Red)
-  ---------------------------
-  Overcast  | Sunny -> Cloudy
-  Wind      | 0 mph -> idk mph
-  Rain      | no rain -> heavy rain
-  
-  
+    Component | Chill (black) -> moderate (Orange) -> Severe (Red)
+    ---------------------------
+    Overcast  | Sunny -> Cloudy
+    Wind      | 0 mph -> idk mph
+    Rain      | no rain -> heavy rain
   */
  const mockWeatherData: WeatherData = {
    overcast: "sunny",
-   wind: 5,
-   rain: 5
+   wind: 5, //mph
+   rain: 5 // in/h
   }; //get from state manager
   const levels = {
     light: "black",
@@ -32,9 +30,9 @@
   };
   
   //compute appropriate color
-  let overcastStatus = mockWeatherData.overcast == ("sunny") ? levels.light : levels.severe;
-  let windStatus  = mockWeatherData.wind == (5) ? levels.moderate : levels.severe;
-  let rainStatus = mockWeatherData.rain == (5) ? levels.severe : levels.severe;
+  let overcastStatus = levels.light;
+  let windStatus  = (mockWeatherData.wind <= 8) ? levels.light : (mockWeatherData.wind <= 10) ? levels.moderate : levels.severe;
+  let rainStatus = (mockWeatherData.rain <= 0.01) ? levels.light : ( mockWeatherData.rain <= 0.02) ? levels.moderate : levels.severe;
   const weatherStyles = "flex items-center gap-1";
 </script>
 <template>
@@ -47,7 +45,7 @@
           <Wind :color="windStatus"/> {{ mockWeatherData.wind }} mph
       </div>
       <div :class=weatherStyles>
-        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }}%
+        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }}in/h
       </div>
     </CardContent>
   </Card>
