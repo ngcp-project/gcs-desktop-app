@@ -3,6 +3,7 @@ import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import DeployCard from "@/components/Sidebar/SidebarCards/CameraScreen/DeployCard.vue";
 import SidebarHeader from "@/components/ui/sidebar/SidebarHeader.vue";
 import EmergencyStopDialog from "@/components/VehicleStatus/EmergencyStopDialog.vue";
+import WeatherCard from "./Sidebar/SidebarCards/CameraScreen/WeatherCard.vue";
 
 defineProps<{
   vehicles: {
@@ -38,6 +39,7 @@ defineProps<{
           :airspeed="vehicle.airspeed"
         />
       </div>
+      <WeatherCard />
     </SidebarContent>
   </Sidebar>
 </template>
