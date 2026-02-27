@@ -56,7 +56,6 @@ const isAuto = computed(() => {
     <CardContent class="flex flex-col items-start space-y-3">
       <!-- Battery & Connection Info -->
       <section class="flex items-center justify-between gap-x-2 py-1">
-        <!-- <Connection :latency="connection" :display-latency="false" /> -->
         <span class="font-semibold">
           {{ `${vehicleTelemetry.signal_strength}ms` }}
         </span>
