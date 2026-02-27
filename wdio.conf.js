@@ -11,7 +11,7 @@ let exit = false;
 
 export const config = {
   host: 'localhost',
-  port: 4000,
+  port: 4444,
   specs: ['./e2e-tests/**/*.js'],
   maxInstances: 1,
   capabilities: [
@@ -34,7 +34,7 @@ export const config = {
     // Remove the extra `--` if you're not using npm!
     spawnSync(
       'bun',
-      ['run', 'tauri', 'build', '--debug', '--no-bundle'],
+      ['run', 'tauri', 'build', '--config', 'src-tauri/tauri.conf.test.json', '--debug', '--no-bundle'],
       {
         cwd: path.resolve(__dirname),
         stdio: 'inherit',

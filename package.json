@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "vue-tsc --noEmit && vite build",
+    "build:test": "vite build",
     "dev": "vite",
     "preview": "vite preview",
     "osm:setup": "docker compose run osm-setup",
