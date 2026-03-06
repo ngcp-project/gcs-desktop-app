@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { emit } from "@tauri-apps/api/event";
 import { useRoute } from "vue-router";
@@ -18,12 +18,34 @@ const isRight = computed(() => route.path === "/" );
 
 // Reactive Toast State
 const activeToasts = ref<Record<string, ToastData>>({});
+const disabledToasts = reactive<Record<string,number>>({}); 
 const isHovered = ref(false);
-const toastTimestamps = ref<Record<string,number>>({});
-const now = ref(Date.now());
 
 // Max number of toasts visible when collapsed (the rest are fully hidden)
 const VISIBLE_COLLAPSED = 3;
+const TOAST_HEIGHT_ESTIMATE = 72; // approx height of one toast in px
+const TOAST_GAP = 8;
+
+const startCooldown = (id:string): void => {
+  disabledToasts[id] = 3;
+
+  const tick = (remaining: number) =>{
+    if(remaining <= 0){
+      delete disabledToasts[id];
+      return;
+    }
+    disabledToasts[id] = remaining;
+    setTimeout(() => tick(remaining-1),1000);
+  };
+
+  setTimeout(()=>tick(2),1000);
+}
+
+const dismissCooldown = (toast:ToastData):number=>{
+  if(toast.type!="error") return 0;
+  return disabledToasts[toast.id] ?? 0;
+}
+
 
 // Sorted toast list for rendering: Warnings first, errors last 
 const sortedToasts = computed(() => {
@@ -33,24 +55,11 @@ const sortedToasts = computed(() => {
   });
 });
 
-
-//tick every 200ms to update UI when cooldown expires
-setInterval(()=>{
-  now.value = Date.now();
-}, 200);
-
-const DISMISS_COOLDOWN = 3000; //milliseconds
-
-//provides remaining seconds of cooldown for dismiss button
-const dismissCooldown = (toast:ToastData): number=>{
-  if(toast.type!=="error") return 0;
-  const created = toastTimestamps.value[toast.id];
-  if(!created) return 0;
-  const elapsed = now.value - created;
-  if (elapsed >= DISMISS_COOLDOWN) return 0;
-  //return whole second
-  return Math.ceil((DISMISS_COOLDOWN - elapsed)/1000);
-}
+// track heigh with fixed estimate
+const getExpandedOffset = (arrayIndex: number): number => {
+  const stackIndex = getStackIndex(arrayIndex);
+  return stackIndex * (TOAST_HEIGHT_ESTIMATE + TOAST_GAP);
+};
 
 // Index from the front (0 = bottom/most prominent) */
 const getStackIndex = (arrayIndex: number): number => {
@@ -62,8 +71,8 @@ const isVisible = (arrayIndex:number): boolean=>{
 };
 
 const addOrUpdateToast = (toast: ToastData): void => {
-  if(!activeToasts.value[toast.id]){
-    toastTimestamps.value = {...toastTimestamps.value, [toast.id]:Date.now()};
+  if(!activeToasts.value[toast.id] && toast.type === "error"){
+    startCooldown(toast.id)
   }
   activeToasts.value = { ...activeToasts.value, [toast.id]: toast };
 };
@@ -72,14 +81,13 @@ const removeToast = (id: string): void => {
   if (activeToasts.value[id]) {
     const { [id]: _, ...rest } = activeToasts.value;
     activeToasts.value = rest;
-    const { [id]: __, ...restTimestamps } = toastTimestamps.value;
-    toastTimestamps.value = restTimestamps;
+    delete disabledToasts[id];
   }
 };
 
 const clearAll = (): void => {
   activeToasts.value = {};
-  toastTimestamps.value = {};
+  Object.keys(disabledToasts).forEach((k)=> delete disabledToasts[k]);
   console.log("All alerts cleared");
 };
 
@@ -131,7 +139,7 @@ listen("dismiss-all-toasts", () => {
           ]"
           :style="{
             '--stack-index': getStackIndex(index),
-            '--expanded': isHovered ? 1 : 0,
+            '--expanded-offset': `${getExpandedOffset(index)}px`,
           }"
           role="alert"
         >
@@ -193,32 +201,45 @@ listen("dismiss-all-toasts", () => {
 /* Stage — wrapper that toasts position themselves inside of */
 .toast-stage {
   position: relative;
-  display: flex;
-  flex-direction: column-reverse; /* newest/errors at bottom = visually on top */
-  align-items: flex-end;
-  gap: 0px;
   pointer-events: none;
 }
 
-.toast-stack--left .toast-stage {
-  align-items: flex-start;
-}
-
-.toast-stack:not(.toast-stack--expanded) .toast-item--front {
+/* ---- Front toast: always in flow to size the container ---- */
+.toast-item--front {
   position: relative;
   z-index: 1;
 }
 
-/* Individual Toast */
-/* Collapsed: non-front items stack via absolute positioning */
-.toast-stack:not(.toast-stack--expanded) .toast-item {
+/* ---- Non-front toasts: always absolute, never switch ---- */
+.toast-item:not(.toast-item--front) {
   position: absolute;
   bottom: 0;
   left: 0;
+}
+
+/* ---- Collapsed (default): peek behind front toast ---- */
+.toast-stack:not(.toast-stack--expanded) .toast-item:not(.toast-item--front) {
   transform:
     translateY(calc(var(--stack-index) * -8px))
     scale(calc(1 - var(--stack-index) * 0.04));
   opacity: calc(1 - var(--stack-index) * 0.15);
+}
+
+/* ---- Expanded: fan out upward using translateY ---- */
+.toast-stack--expanded .toast-item:not(.toast-item--front) {
+  transform: translateY(calc(-1 * var(--expanded-offset)));
+  opacity: 1;
+}
+
+.toast-stack--expanded .toast-item--front {
+  transform: none;
+  opacity: 1;
+}
+
+
+
+.toast-stack--left .toast-stage {
+  align-items: flex-start;
 }
 
 /* Front toast stays in flow so the container has a size */
@@ -230,16 +251,6 @@ listen("dismiss-all-toasts", () => {
 .toast-item--hidden {
   opacity: 0 !important;
   pointer-events: none !important;
-}
-
-.toast-stack--expanded .toast-item {
-  position: relative;
-  transform: none;
-  opacity: 1;
-}
-
-.toast-stack--expanded .toast-item + .toast-item {
-  margin-top: 8px;
 }
 
 /* ---------- Type colors ---------- */
