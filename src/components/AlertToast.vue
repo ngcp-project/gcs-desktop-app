@@ -41,12 +41,15 @@ setInterval(()=>{
 
 const DISMISS_COOLDOWN = 3000; //milliseconds
 
-//determines whether or not dismiss button on error toast is disabled
-const isDismissDisabled = (toast:ToastData):boolean=>{
-  if(toast.type!=="error") return false;
+//provides remaining seconds of cooldown for dismiss button
+const dismissCooldown = (toast:ToastData): number=>{
+  if(toast.type!=="error") return 0;
   const created = toastTimestamps.value[toast.id];
-  if(!created) return false;
-  return now.value - created < DISMISS_COOLDOWN;
+  if(!created) return 0;
+  const elapsed = now.value - created;
+  if (elapsed >= DISMISS_COOLDOWN) return 0;
+  //return whole second
+  return Math.ceil((DISMISS_COOLDOWN - elapsed)/1000);
 }
 
 // Index from the front (0 = bottom/most prominent) */
@@ -159,10 +162,10 @@ listen("dismiss-all-toasts", () => {
 
           <!-- Dismiss -->
           <button class="toast-dismiss" 
-          :class = "{'toast-dismiss--disabled': isDismissDisabled(t)}"
-          :disabled="isDismissDisabled(t)"
+          :class = "{'toast-dismiss--disabled': dismissCooldown(t) > 0}"
+          :disabled="dismissCooldown(t) > 0"
           @click="dismissToast(t.id)">
-            Dismiss
+          Dismiss{{ dismissCooldown(t) > 0 ? ` (${dismissCooldown(t)})` : '' }}
           </button>
         </div>
       </TransitionGroup>
