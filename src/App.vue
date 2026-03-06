@@ -11,6 +11,7 @@ import SidebarProvider from "./components/ui/sidebar/SidebarProvider.vue";
 import { useColorMode } from "@vueuse/core";
 
 import AlertToast from "@/components/AlertToast.vue";
+import AlertTest from "./components/AlertTest.vue";
 
 // --------- SEARCH AREA COORDINATES (used to select a search area from Map.vue) ------ //
 const searchCoords = ref([""]);
@@ -110,10 +111,11 @@ export type { Coordinate, Vehicle, Stage };
 </script>
 
 <template>
+
+  <AlertToast/>
   <!-- Toast testing bar -->
-  <div class="fixed bottom-0 z-50 flex w-full items-center justify-center gap-3 pb-3">
-     <AlertToast/>
-  </div>
+   <AlertTest/>
+  
 
   <div class="flex h-[100dvh] flex-col">
     <SidebarProvider class="min-h-0 flex-grow overflow-y-hidden">

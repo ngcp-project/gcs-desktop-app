@@ -1,186 +1,352 @@
 <script setup lang="ts">
+import { ref, computed } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { emit } from "@tauri-apps/api/event";
 import { useRoute } from "vue-router";
-import { computed } from "vue";
-import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
-import { toast } from "vue-sonner";
 
-// --------- Toast Position Based on Route --------- //
+// Types
+interface ToastData {
+  id: string;
+  type: "error" | "warning" | "info";
+  title: string;
+  description: string;
+}
+
+// Toast Position Based on Route
 const route = useRoute();
-const toasterPosition = computed(() => {
-  return route.path === "/" ? "bottom-right" : "bottom-left"; // '/' is the route of StaticScreen
+const isRight = computed(() => route.path === "/" );
+
+// Reactive Toast State
+const activeToasts = ref<Record<string, ToastData>>({});
+const isHovered = ref(false);
+const toastTimestamps = ref<Record<string,number>>({});
+const now = ref(Date.now());
+
+// Max number of toasts visible when collapsed (the rest are fully hidden)
+const VISIBLE_COLLAPSED = 3;
+
+// Sorted toast list for rendering: Warnings first, errors last 
+const sortedToasts = computed(() => {
+  return Object.values(activeToasts.value).sort((a, b) => {
+    const priority = (type: string): number => (type === "error" ? 1 : 0);
+    return priority(a.type) - priority(b.type);
+  });
 });
 
-// --------- Listen for Alert Events --------- //
-// These events are emitted by alertMonitoring.ts when alert conditions are detected
+
+//tick every 200ms to update UI when cooldown expires
+setInterval(()=>{
+  now.value = Date.now();
+}, 200);
+
+const DISMISS_COOLDOWN = 3000; //milliseconds
+
+//determines whether or not dismiss button on error toast is disabled
+const isDismissDisabled = (toast:ToastData):boolean=>{
+  if(toast.type!=="error") return false;
+  const created = toastTimestamps.value[toast.id];
+  if(!created) return false;
+  return now.value - created < DISMISS_COOLDOWN;
+}
+
+// Index from the front (0 = bottom/most prominent) */
+const getStackIndex = (arrayIndex: number): number => {
+  return sortedToasts.value.length - 1 - arrayIndex;
+};
+
+const isVisible = (arrayIndex:number): boolean=>{
+  return getStackIndex(arrayIndex) < VISIBLE_COLLAPSED;
+};
+
+const addOrUpdateToast = (toast: ToastData): void => {
+  if(!activeToasts.value[toast.id]){
+    toastTimestamps.value = {...toastTimestamps.value, [toast.id]:Date.now()};
+  }
+  activeToasts.value = { ...activeToasts.value, [toast.id]: toast };
+};
+
+const removeToast = (id: string): void => {
+  if (activeToasts.value[id]) {
+    const { [id]: _, ...rest } = activeToasts.value;
+    activeToasts.value = rest;
+    const { [id]: __, ...restTimestamps } = toastTimestamps.value;
+    toastTimestamps.value = restTimestamps;
+  }
+};
+
+const clearAll = (): void => {
+  activeToasts.value = {};
+  toastTimestamps.value = {};
+  console.log("All alerts cleared");
+};
+
+const dismissToast = (id: string): void => {
+  emit("dismiss-toast", { id });
+};
+
+// Tauri Event Listeners
 
 listen("create-toast", (event) => {
-  const { id, type, title, description } = event.payload as {
-    id: string;
-    type: "error" | "warning" | "info";
-    title: string;
-    description: string;
-  };
-
-  toast[type](title, {
-    id,
-    description,
-    duration: Infinity,
-    action: { label: "Dismiss", onClick: () => emit("dismiss-toast", { id }) }
-  });
+  const payload = event.payload as ToastData;
+  addOrUpdateToast(payload);
 });
 
 listen("dismiss-toast", (event) => {
   const { id } = event.payload as { id: string };
-  toast.dismiss(id);
-  console.log(`Alert cleared: ${id}`);
+  removeToast(id);
 });
 
 listen("dismiss-all-toasts", () => {
-  toast.dismiss();
-  console.log(`All toast cleared`);
+  clearAll();
 });
 </script>
 
 <template>
-  <Toaster
-   richColors 
-  :position="toasterPosition"
-   />
-   <!-- Testing Buttons - Positioned at bottom -->
-  
-    <!-- --------- Errors --------- -->
-    
-    <Button
-      variant="outline"
-      @click="
-        () => {
-          emit('create-toast', {
-            id: 'test_connection_error',
-            type: 'error',
-            title: 'Error: Connection Failure',
-            description: 'Unable to connect to ERU (test)'
-          });
-        }
-      "
-    >
-      Connection Error
-    </Button>
-
-    <Button
-      variant="outline"
-      @click="
-        () => {
-          emit('create-toast', {
-            id: 'test_abnormal_status',
-            type: 'error',
-            title: 'Error: Abnormal Status',
-            description: 'Abnormal MEA status (low battery) (test)'
-          });
-        }
-      "
-    >
-      Abnormal Status Error
-   
-    </Button>
-
-
-    <!-- --------- Warnings --------- -->
-
-    <Button
-      variant="outline"
-      @click="
-        () => {
-          emit('create-toast', {
-            id: 'test_signal_integrity',
-            type: 'warning',
-            title: 'Warning: Signal Integrity',
-            description: 'Weak signal integrity/connection lost to MRA (test)'
-          });
-        }
-      "
-    >
-      Signal Integrity Warning
-    </Button>
-
-    <Button
-      variant="outline"
-      @click="
-        () => {
-          emit('create-toast', {
-            id: 'test_keep_out',
-            type: 'warning',
-            title: 'Warning: Keep-Out Zone',
-            description: 'ERU within 500 ft of keep-out zone (test)'
-          });
-        }
-      "
-    >
-      Keep-Out Warning
-    </Button>
-
-    <Button
-    variant="outline"
-    @click="
-      () => {
-        emit('create-toast', {
-          id: 'test_proximity',
-          type: 'warning',
-          title: 'Warning: Vehicle Proximity',
-          description: 'ERU and MEA are within 50 ft of each other (test)'
-        });
-      }
-    "
+  <div
+    :class="[
+      'toast-stack',
+      isRight ? 'toast-stack--right' : 'toast-stack--left',
+      { 'toast-stack--expanded': isHovered },
+    ]"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
-  Proximity Warning
-  </Button>
+    <!-- "stage" is a relative container that collapses to
+      the height of a single toast when not hovered. -->
+    <div class="toast-stage">
+      <TransitionGroup name="toast">
+        <div
+          v-for="(t, index) in sortedToasts"
+          :key="t.id"
+          :class="[
+            'toast-item',
+            `toast-item--${t.type}`,
+            {
+              'toast-item--hidden': !isHovered && !isVisible(index),
+              'toast-item--front': getStackIndex(index) === 0,
+            },
+          ]"
+          :style="{
+            '--stack-index': getStackIndex(index),
+            '--expanded': isHovered ? 1 : 0,
+          }"
+          role="alert"
+        >
+          <!-- Icon -->
+          <div class="toast-icon">
+            <svg v-if="t.type === 'error'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m15 9-6 6"/>
+              <path d="m9 9 6 6"/>
+            </svg>
+            <svg v-else-if="t.type === 'warning'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>
+              <path d="M12 9v4"/>
+              <path d="M12 17h.01"/>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4"/>
+              <path d="M12 8h.01"/>
+            </svg>
+          </div>
 
-    <!-- --------- Dismiss All --------- -->
-    <Button
-      variant="outline"
-      @click="
-        () => {
-          emit('dismiss-all-toasts');
-        }
-      "
-    >
-      Dismiss All
-    </Button>
+          <!-- Content -->
+          <div class="toast-content">
+            <div class="toast-title">{{ t.title }}</div>
+            <div class="toast-description">{{ t.description }}</div>
+          </div>
 
+          <!-- Dismiss -->
+          <button class="toast-dismiss" 
+          :class = "{'toast-dismiss--disabled': isDismissDisabled(t)}"
+          :disabled="isDismissDisabled(t)"
+          @click="dismissToast(t.id)">
+            Dismiss
+          </button>
+        </div>
+      </TransitionGroup>
+    </div>
+  </div>
 </template>
 
-
-<!-- Toast offset and reduction in size -->
 <style scoped>
-/* Offset toasts from bottom only, without affecting horizontal position */
-:deep([data-sonner-toaster]) {
-  bottom: 60px !important;
+/*Stack container — fixed to viewport*/
+.toast-stack {
+  position: fixed;
+  bottom: 60px;
+  z-index: 9999;
+  pointer-events: none;
 }
 
-/* Make toasts smaller */
-:deep([data-sonner-toast]) {
-  max-width: 320px !important;      /* Reduce width (default is 356px) */
-  padding: 12px !important;          /* Reduce padding (default is 16px) */
-  font-size: 0.875rem !important;   /* Smaller font size (14px) */
+.toast-stack--right {
+  right: 16px;
 }
 
-/* Adjust toast title size */
-:deep([data-sonner-toast] [data-title]) {
-  font-size: 0.875rem !important;   /* Smaller title (14px) */
-  margin-bottom: 2px !important;     /* Less space below title */
+.toast-stack--left {
+  left: 16px;
 }
 
-/* Adjust toast description size */
-:deep([data-sonner-toast] [data-description]) {
-  font-size: 0.8125rem !important;  /* Smaller description (13px) */
-  line-height: 1.3 !important;       /* Tighter line height */
+/* Stage — wrapper that toasts position themselves inside of */
+.toast-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse; /* newest/errors at bottom = visually on top */
+  align-items: flex-end;
+  gap: 0px;
+  pointer-events: none;
 }
 
-/*  Adjust toast button size */
-:deep([data-sonner-toast] button) {
-  font-size: 0.8125rem !important;  /* Smaller button text (13px) */
-  padding: 4px 8px !important;       /* Smaller button padding */
+.toast-stack--left .toast-stage {
+  align-items: flex-start;
 }
+
+.toast-stack:not(.toast-stack--expanded) .toast-item--front {
+  position: relative;
+  z-index: 1;
+}
+
+/* Individual Toast */
+/* Collapsed: non-front items stack via absolute positioning */
+.toast-stack:not(.toast-stack--expanded) .toast-item {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform:
+    translateY(calc(var(--stack-index) * -8px))
+    scale(calc(1 - var(--stack-index) * 0.04));
+  opacity: calc(1 - var(--stack-index) * 0.15);
+}
+
+/* Front toast stays in flow so the container has a size */
+.toast-stack:not(.toast-stack--expanded) .toast-item--front {
+  position: relative;
+  z-index: 1;
+}
+
+.toast-item--hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.toast-stack--expanded .toast-item {
+  position: relative;
+  transform: none;
+  opacity: 1;
+}
+
+.toast-stack--expanded .toast-item + .toast-item {
+  margin-top: 8px;
+}
+
+/* ---------- Type colors ---------- */
+.toast-item--error {
+  background-color: #f6cbcb;
+  border-color: #f48080;
+  color: #991b1b;
+}
+
+.toast-item--warning {
+  background-color: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.toast-item--info {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+/** Individual toast */
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 320px;
+  min-width: 280px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  transform-origin: bottom center;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.3s ease;
+}
+
+/* ---------- Inner elements ---------- */
+.toast-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.toast-description {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  opacity: 0.9;
+}
+
+.toast-dismiss {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.toast-dismiss:hover {
+  opacity: 1;
+}
+
+.toast-dismiss--disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ---------- Transition animations ---------- */
+.toast-enter-active {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-leave-active {
+  transition: all 0.2s ease-in;
+  position: absolute !important;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-move {
+  transition: transform 0.3s ease;
+}
+
 </style>
