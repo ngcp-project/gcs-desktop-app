@@ -10,6 +10,7 @@ let tauriDriver;
 let exit = false;
 
 export const config = {
+  baseUrl: process.platform === 'win32' ? 'https://tauri.localhost' : 'tauri://localhost',
   host: 'localhost',
   port: 4444,
   specs: ['./e2e-tests/**/*.js'],

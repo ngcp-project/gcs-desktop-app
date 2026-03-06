@@ -2,5 +2,16 @@
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/tooling/cli/schema.json",
   "build": {
     "beforeBuildCommand": "bun run build:test"
+  },
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "TEST WINDOW",
+        "width": 800,
+        "height": 600
+      }
+    ]
   }
 }
