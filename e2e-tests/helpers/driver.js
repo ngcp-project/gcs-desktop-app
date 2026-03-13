@@ -22,6 +22,8 @@ export async function createDriver() {
   // start the webdriver client
   return new Builder()
     .withCapabilities(capabilities)
-    .usingServer('http://127.0.0.1:4444/')
+    .usingServer('http://localhost:4444/')
     .build();
 };
+
+export const baseUrl = (process.platform === 'win32' ? 'https://tauri.localhost' : 'tauri://localhost');

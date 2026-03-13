@@ -13,7 +13,7 @@ export const mochaHooks = {
   async beforeAll() {
     // set timeout to 2 minutes to allow the program to build if it needs to
     this.timeout(120000);
-  
+
     // ensure the app has been built
     spawnSync('bun', ['run', 'tauri', 'build', '--config', 'src-tauri/tauri.conf.test.json', '--debug', '--no-bundle'], {
       cwd: path.resolve(__dirname, '..'),
@@ -38,6 +38,7 @@ export const mochaHooks = {
       }
     });
 
+    await new Promise(resolve => setTimeout(resolve, 2000));
   },
 
   async afterAll() {
