@@ -1,0 +1,6 @@
+{
+  "spec": "e2e-tests/specs/**/*.spec.js",
+  "require": "./e2e-tests/setup.js",
+  "timeout": 120000,
+  "exit": true
+}
