@@ -97,7 +97,7 @@ const handleCreateZone = (index: number) => {
     </CardTitle>
 
     <!-- Zones List -->
-    <CardContent class="mt-2 flex flex-col items-start space-y-3">
+    <CardContent class="mt-2 flex flex-col items-start space-y-3 zone-content">
       <div
         v-for="(zone, index) in zones"
         :key="props.zoneType"
@@ -105,9 +105,9 @@ const handleCreateZone = (index: number) => {
       >
         <span class="font-semibold flex items-center gap-2">
           Zone {{ index }}
-          <div 
+          <div
             v-if="zone.length !== 0"
-            class="w-2 h-2 rounded-full" 
+            class="w-2 h-2 rounded-full"
             :class="visibilityStates.get(index) ? 'bg-muted-foreground' : 'bg-chart-4'"
           ></div>
         </span>
@@ -126,11 +126,11 @@ const handleCreateZone = (index: number) => {
             class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
           />
           <Trash2
-           
+
             v-if="mission?.mission_status !== 'Complete' && currentMissionId !== null"
             @click="handleDeleteZone(index)"
-            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
-          
+            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500 delete-zone-button"
+
           />
         </div>
       </div>
@@ -142,10 +142,10 @@ const handleCreateZone = (index: number) => {
       class="mt-4 items-center justify-center"
     >
       <Button
-        
+
         v-if="currentMissionId !== null"
         @click="handleNewZone()"
-        class="text-fg flex flex-col items-center bg-transparent shadow-none hover:bg-transparent"
+        class="text-fg flex flex-col items-center bg-transparent shadow-none hover:bg-transparent add-zone-button"
       >
         <Plus class="h-5 w-5" />
         Add Zone

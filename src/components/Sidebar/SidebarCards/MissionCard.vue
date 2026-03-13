@@ -54,7 +54,7 @@ const handleMissionNameChange = (event: Event) => {
       <div v-if="mission.mission_status == 'Inactive'" class="cursor-pointer trash-mission-button">
         <Trash2
           @click.stop="missionStore.deleteMission(mission.mission_id)"
-          class="h-5 w-5 text-foreground hover:text-destructive"
+          class="h-5 w-5 text-foreground hover:text-destructive delete-mission-button"
         />
       </div>
     </CardTitle>
