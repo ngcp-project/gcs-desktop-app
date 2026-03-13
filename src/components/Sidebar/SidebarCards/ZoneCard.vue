@@ -116,14 +116,14 @@ const handleCreateZone = (index: number) => {
           <component
             :is="zone.length === 0 ? Plus : (editingZoneIndex === index ? Check : Pencil)"
             v-if="mission?.mission_status !== 'Complete'"
-            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
+            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500 setup-zone-button"
             @click="handleCreateZone(index)"
           />
           <component
             :is="zone.length === 0 ? EyeOff : (visibilityStates.get(index) ? EyeOff : Eye)"
             v-if="zone.length !== 0"
             @click="toggleVisibility(index)"
-            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
+            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500 toggle-zone-button"
           />
           <Trash2
 

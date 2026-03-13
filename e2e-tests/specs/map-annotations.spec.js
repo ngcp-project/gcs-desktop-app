@@ -1,6 +1,6 @@
 import { createDriver, baseUrl } from '../helpers/driver.js';
 import { expect } from 'chai';
-import { By } from 'selenium-webdriver';
+import { By, Origin } from 'selenium-webdriver';
 
 describe("Map annotations", () => {
   let driver;
@@ -64,7 +64,53 @@ describe("Map annotations", () => {
       expect(zoneName).to.equal("Zone 0");
     });
 
-    it(`should delte the created ${name} zone`, async () => {
+    it(`should set up the created ${name} zone`, async () => {
+      const origin = 200;
+      const offset = 100;
+      const duration = 500;
+
+      const zoneCard = (await driver.findElements(By.css('div.zones-list > div')))[index];
+      const zone = (await zoneCard.findElements(By.css('div.zone-content > div')))[0];
+      await zone.findElement(By.css('svg.setup-zone-button')).click();
+
+      await driver.sleep(500); // wait a tick to ensure list updates
+      const actions = driver.actions({ async: true });
+      await actions
+        .move({ x: origin, y: origin, origin: Origin.VIEWPORT }).click().pause(duration)
+        .move({ x: offset, y: 0, origin: Origin.POINTER }).click().pause(duration)
+        .move({ x: 0, y: offset, origin: Origin.POINTER }).click().pause(duration)
+        .move({ x: 0 - offset, y: 0, origin: Origin.POINTER }).click().pause(duration)
+        .move({ x: 0, y: 0 - offset, origin: Origin.POINTER }).click().pause(duration)
+        .perform();
+
+      await driver.findElement(By.css('path.leaflet-interactive'));
+    });
+
+    it(`should render and hide the created ${name} zone`, async () => {
+      // ASSUMPTION: only one zone is currently being rendered
+      const zoneMapPath = await driver.findElement(By.css('path.leaflet-interactive'));
+
+      const zoneCard = (await driver.findElements(By.css('div.zones-list > div')))[index];
+      const zone = (await zoneCard.findElements(By.css('div.zone-content > div')))[0];
+
+      // hidden
+      await zone.findElement(By.css('svg.toggle-zone-button')).click();
+      await driver.sleep(500); // wait a tick to ensure list updates
+      expect(await zoneMapPath.getAttribute('stroke-opacity')).to.equal('0');
+      expect(await zoneMapPath.getAttribute('fill-opacity')).to.equal('0');
+
+      //shown
+      await zone.findElement(By.css('svg.toggle-zone-button')).click();
+      await driver.sleep(500); // wait a tick to ensure list updates
+      expect(await zoneMapPath.getAttribute('stroke-opacity')).to.equal('1');
+      expect(await zoneMapPath.getAttribute('fill-opacity')).to.equal('0.2');
+    });
+
+    it(`should edit the created ${name} zone`, async () => {
+      // TODO: using setup-zone-button
+    });
+
+    it(`should delete the created ${name} zone`, async () => {
       const zoneCard = (await driver.findElements(By.css('div.zones-list > div')))[index];
       const zoneList = await zoneCard.findElements(By.css('div.zone-content > div'));
       const zone = zoneList[0];
