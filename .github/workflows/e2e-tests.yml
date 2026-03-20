@@ -1,0 +1,101 @@
+# run this action when the repository is pushed to
+on: [push]
+
+# the name of our workflow
+name: End-to-End Tests
+
+jobs:
+  # a single job named test
+  test:
+    # the display name of the test job
+    name: Selenium Test Runner
+
+    # run on the matrix platform
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      # do not fail other matrix runs if one fails
+      fail-fast: false
+      # set all platforms our test should run on
+      matrix:
+        platform: [ubuntu-latest, windows-latest]
+
+    # the steps our job runs **in order**
+    steps:
+      # checkout the code on the workflow runner
+      - uses: actions/checkout@v4
+
+      # install system dependencies that Tauri needs to compile on Linux.
+      # note the extra dependencies for `tauri-driver` to run which are: `webkit2gtk-driver` and `xvfb`
+      - name: Tauri dependencies
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update &&
+          sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          libayatana-appindicator3-dev \
+          webkit2gtk-driver \
+          xvfb
+
+      # install a matching Microsoft Edge Driver version using msedgedriver-tool
+      - name: install msdgedriver (Windows)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          cargo install --git https://github.com/chippers/msedgedriver-tool
+          & "$HOME/.cargo/bin/msedgedriver-tool.exe"
+          $PWD.Path >> $env:GITHUB_PATH
+
+      # install latest stable Rust release
+      - name: Setup rust-toolchain stable
+        uses: dtolnay/rust-toolchain@stable
+
+      # setup caching for the Rust target folder
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # install the latest stable bun version at the time of writing
+      - name: Node 24
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # install the application Bun dependencies
+      - name: Bun install
+        run: bun install --frozen-lockfile
+
+      # install the latest version of `tauri-driver`.
+      # note: the tauri-driver version is independent of any other Tauri versions
+      - name: Install tauri-driver
+        run: cargo install tauri-driver --locked
+
+      # Pull the docker containers
+      - name: Pull Docker Containers
+        run: docker compose pull
+
+      # Start the DB and RabbitMQ containers
+      # since the Tauri application requires them to be active
+      - name: Start DB and RabbitMQ
+        run: docker compose up -d db rabbitmq
+
+      # Set up the OSM server
+      - name: Set up Map Server
+        run: bun run osm:setup
+
+      # Start the OSM server
+      # since the Tauri application requires it to be active
+      - name: Start Map Server
+        run: bun run osm:run -d
+
+      # run the Selenium test suite on Linux.
+      # we run it through `xvfb-run` (the dependency we installed earlier) to have a fake
+      # display server which allows our application to run headless without any changes to the code
+      - name: Selenium (Linux)
+        if: matrix.platform == 'ubuntu-latest'
+        run: xvfb-run bun run test
+
+      # run the Selenium test suite on Windows.
+      # in this case we can run the tests directly.
+      - name: Selenium (Windows)
+        if: matrix.platform == 'windows-latest'
+        run: bun run test
