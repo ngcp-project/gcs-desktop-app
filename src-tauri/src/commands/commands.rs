@@ -1,13 +1,13 @@
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use taurpc::{procedures, resolvers};
-use serde::{Deserialize, Serialize};
-use specta::Type;
 use lapin::{
     options::{BasicPublishOptions, QueueDeclareOptions},
     types::FieldTable,
-    Connection, ConnectionProperties, BasicProperties,
+    BasicProperties, Connection, ConnectionProperties,
 };
+use serde::{Deserialize, Serialize};
+use specta::Type;
+use std::sync::Arc;
+use taurpc::{procedures, resolvers};
+use tokio::sync::Mutex;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Type)]
 pub struct GeoCoordinate {
@@ -29,13 +29,22 @@ type SharedCommands = Arc<Mutex<CommandsStruct>>;
 pub trait CommandsApi {
     async fn send_emergency_stop(vehicle_id: String) -> Result<(), String>;
     async fn send_mission_update(vehicle_id: String, mission_id: String) -> Result<(), String>;
-    async fn send_zone_update(vehicle_id: String, zone_id: String, coordinates: Vec<GeoCoordinate>) -> Result<(), String>;
+    async fn send_zone_update(
+        vehicle_id: String,
+        zone_id: String,
+        coordinates: Vec<GeoCoordinate>,
+    ) -> Result<(), String>;
 }
 
 #[derive(Clone)]
 pub struct CommandsApiImpl {
     state: SharedCommands,
 }
+
+// Implementation of our own "RPC", using rust:
+// Basic idea:
+// - create_consumer for commands ack ??idk
+// -
 
 impl Default for CommandsApiImpl {
     fn default() -> Self {
@@ -53,14 +62,18 @@ impl Default for CommandsApiImpl {
 impl CommandsApi for CommandsApiImpl {
     async fn send_emergency_stop(self, vehicle_id: String) -> Result<(), String> {
         let mut state = self.state.lock().await;
-        state.vehicle_id = vehicle_id;  // This will be "ALL" for all vehicles or specific vehicle name
+        state.vehicle_id = vehicle_id; // This will be "ALL" for all vehicles or specific vehicle name
         state.commandID = 1; // Emergency stop command ID
         state.coordinates = None;
         self.publish_command_to_rabbitmq(&state).await?;
         Ok(())
     }
 
-    async fn send_mission_update(self, vehicle_id: String, mission_id: String) -> Result<(), String> {
+    async fn send_mission_update(
+        self,
+        vehicle_id: String,
+        mission_id: String,
+    ) -> Result<(), String> {
         let mut state = self.state.lock().await;
         state.vehicle_id = vehicle_id;
         state.commandID = mission_id.parse().unwrap_or(0);
@@ -69,7 +82,12 @@ impl CommandsApi for CommandsApiImpl {
         Ok(())
     }
 
-    async fn send_zone_update(self, vehicle_id: String, zone_id: String, coordinates: Vec<GeoCoordinate>) -> Result<(), String> {
+    async fn send_zone_update(
+        self,
+        vehicle_id: String,
+        zone_id: String,
+        coordinates: Vec<GeoCoordinate>,
+    ) -> Result<(), String> {
         let mut state = self.state.lock().await;
         state.vehicle_id = vehicle_id;
         state.commandID = zone_id.parse().unwrap_or(0);
@@ -109,7 +127,10 @@ impl CommandsApiImpl {
             )
             .await
             .map_err(|e| format!("Failed to declare queue: {}", e))?;
-        println!("Queue 'vehicle_commands' ready count = {}", queue.message_count());
+        println!(
+            "Queue 'vehicle_commands' ready count = {}",
+            queue.message_count()
+        );
 
         // 4) Serialize & publish to default exchange
         let payload = serde_json::to_vec(command)
@@ -125,8 +146,7 @@ impl CommandsApiImpl {
                     ..Default::default()
                 },
                 &payload,
-                BasicProperties::default()
-                    .with_delivery_mode(2), // Make message persistent
+                BasicProperties::default().with_delivery_mode(2), // Make message persistent
             )
             .await
             .map_err(|e| format!("Failed to publish: {}", e))?;
@@ -143,4 +163,6 @@ impl CommandsApiImpl {
 
         Ok(())
     }
+
+    async fn consumer_command_to_rabbitmq(&self, command: &CommandsStruct) -> Result<(), String> {}
 }
