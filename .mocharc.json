@@ -1,5 +1,5 @@
 {
-  "loader": "tsx",
+  "import": "tsx",
   "extension": ["ts"],
   "spec": "e2e-tests/specs/**/*.spec.ts",
   "require": "./e2e-tests/setup.ts",
