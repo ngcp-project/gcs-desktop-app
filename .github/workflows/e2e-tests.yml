@@ -18,7 +18,7 @@ jobs:
     # the steps our job runs **in order**
     steps:
       # checkout the code on the workflow runner
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # install system dependencies that Tauri needs to compile on Linux.
       # note the extra dependencies for `tauri-driver` to run which are: `webkit2gtk-driver` and `xvfb`
@@ -48,7 +48,7 @@ jobs:
           bun-version: latest
 
       # install the application Bun dependencies
-      - name: Bun install
+      - name: Bun Install
         run: bun install --frozen-lockfile
 
       # install the latest version of `tauri-driver`.
@@ -56,26 +56,31 @@ jobs:
       - name: Install tauri-driver
         run: cargo install tauri-driver --locked
 
-      # Pull the docker containers
+      # pull the docker containers
       - name: Pull Docker Containers
         run: docker compose pull
 
-      # Start the DB and RabbitMQ containers
+      # start the DB and RabbitMQ containers
       # since the Tauri application requires them to be active
       - name: Start DB and RabbitMQ
         run: docker compose up -d db rabbitmq
 
-      # Set up the OSM server
+      # set up the OSM server
       - name: Set up Map Server
         run: bun run osm:setup
 
-      # Start the OSM server
+      # start the OSM server
       # since the Tauri application requires it to be active
       - name: Start Map Server
         run: bun run osm:run -d
 
+      # build the Rust backend first since it generates
+      # typescript bindings as part of the build process
+      - name: Build Rust Backend
+        run: cargo build --manifest-path src-tauri/Cargo.toml
+
       # run the Selenium test suite on Linux.
       # we run it through `xvfb-run` (the dependency we installed earlier) to have a fake
       # display server which allows our application to run headless without any changes to the code
-      - name: Selenium (Linux)
+      - name: Run Selenium Test Suite
         run: xvfb-run bun run test
