@@ -77,7 +77,8 @@ jobs:
       # build the Rust backend first since it generates
       # typescript bindings as part of the build process
       - name: Build Rust Backend
-        run: cargo build --manifest-path src-tauri/Cargo.toml
+        run: cargo build
+        working-directory: src-tauri
 
       # run the Selenium test suite on Linux.
       # we run it through `xvfb-run` (the dependency we installed earlier) to have a fake
