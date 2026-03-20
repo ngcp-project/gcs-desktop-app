@@ -1,5 +1,5 @@
 use lapin::{
-    options::{BasicPublishOptions, QueueDeclareOptions},
+    options::{BasicConsumeOptions, BasicPublishOptions, QueueDeclareOptions},
     types::FieldTable,
     BasicProperties, Connection, ConnectionProperties,
 };
@@ -102,11 +102,11 @@ impl CommandsApiImpl {
         // 1) Use %2f to select the "/" vhost
         let addr = std::env::var("AMQP_ADDR")
             .unwrap_or_else(|_| "amqp://admin:admin@localhost:5672/%2f".into());
-        println!("→ Connecting to RabbitMQ at {}", addr);
+        println!("Connecting to RabbitMQ at {}", addr);
         let conn = Connection::connect(&addr, ConnectionProperties::default())
             .await
             .map_err(|e| format!("Failed to connect to RabbitMQ: {}", e))?;
-        println!("→ Connected");
+        println!("Connected");
 
         // 2) Open channel
         let channel = conn
@@ -164,5 +164,61 @@ impl CommandsApiImpl {
         Ok(())
     }
 
-    async fn consumer_command_to_rabbitmq(&self, command: &CommandsStruct) -> Result<(), String> {}
+    // Command Ack struct
+    async fn receive_command_to_rabbitmq(&self, command: &CommandsStruct) -> Result<(), String> {
+        // 1) Use %2f to select the "/" vhost
+        let addr = std::env::var("AMQP_ADDR")
+            .unwrap_or_else(|_| "amqp://admin:admin@localhost:5672/%2f".into());
+        println!("Connecting to RabbitMQ at {}", addr);
+        let conn = Connection::connect(&addr, ConnectionProperties::default())
+            .await
+            .map_err(|e| format!("Failed to connect to RabbitMQ: {}", e))?;
+        println!("Connected");
+
+        // 2) Open channel
+        let channel = conn
+            .create_channel()
+            .await
+            .map_err(|e| format!("Failed to create channel: {}", e))?;
+        println!("Created channel");
+
+        // 3) Declare queue (durable)
+        let queue_name = "vehicle_commands";
+        channel
+            .queue_declare(
+                queue_name,
+                QueueDeclareOptions {
+                    durable: true,
+                    ..Default::default()
+                },
+                FieldTable::default(),
+            )
+            .await
+            .map_err(|e| format!("Failed to declare queue: {}", e))?;
+        println!("Queue {} declared", queue_name);
+
+        let consumer = channel
+            .basic_consume(
+                queue_name,
+                "consumer_tag",
+                BasicConsumeOptions::default(),
+                FieldTable::default(),
+            )
+            .await?;
+
+        while let Some(delivery) = consumer.next().await {
+            if let Ok(delivery) = delivery {
+                let message_body = std::str::from_utf8(&delivery.data).unwrap_or("Invalid UTF-8");
+                println!("Received message: {}", message_body);
+
+                // Acknowledge the message to remove it from the queue
+                channel.basic_ack(delivery.delivery_tag, false).await?;
+            } else {
+                // Handle cases where the delivery itself is an error
+                eprintln!("Error in message delivery");
+            }
+        }
+
+        Ok(())
+    }
 }
