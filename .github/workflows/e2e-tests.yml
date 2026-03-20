@@ -10,14 +10,10 @@ jobs:
     # the display name of the test job
     name: Selenium Test Runner
 
-    # run on the matrix platform
-    runs-on: ${{ matrix.platform }}
-    strategy:
-      # do not fail other matrix runs if one fails
-      fail-fast: false
-      # set all platforms our test should run on
-      matrix:
-        platform: [ubuntu-latest, windows-latest]
+    # run on linux only, windows does not work because
+    # linux containers cannot run in windows runners
+    # because of a lack of nested virtualization support
+    runs-on: ubuntu-latest
 
     # the steps our job runs **in order**
     steps:
@@ -27,7 +23,6 @@ jobs:
       # install system dependencies that Tauri needs to compile on Linux.
       # note the extra dependencies for `tauri-driver` to run which are: `webkit2gtk-driver` and `xvfb`
       - name: Tauri dependencies
-        if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update &&
           sudo apt-get install -y \
@@ -35,14 +30,6 @@ jobs:
           libayatana-appindicator3-dev \
           webkit2gtk-driver \
           xvfb
-
-      # install a matching Microsoft Edge Driver version using msedgedriver-tool
-      - name: install msdgedriver (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: |
-          cargo install --git https://github.com/chippers/msedgedriver-tool
-          & "$HOME/.cargo/bin/msedgedriver-tool.exe"
-          $PWD.Path >> $env:GITHUB_PATH
 
       # install latest stable Rust release
       - name: Setup rust-toolchain stable
@@ -91,11 +78,4 @@ jobs:
       # we run it through `xvfb-run` (the dependency we installed earlier) to have a fake
       # display server which allows our application to run headless without any changes to the code
       - name: Selenium (Linux)
-        if: matrix.platform == 'ubuntu-latest'
         run: xvfb-run bun run test
-
-      # run the Selenium test suite on Windows.
-      # in this case we can run the tests directly.
-      - name: Selenium (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: bun run test
