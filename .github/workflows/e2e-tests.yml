@@ -56,13 +56,6 @@ jobs:
       - name: Install tauri-driver
         run: cargo install tauri-driver --locked
 
-      # HACK: generate bindings by running tauri dev
-      # this is expected to fail since we don't have a graphical environment
-      # and we aren't running the necessary containers at this point
-      # required because TauRPC only generates bindings in tauri dev mode
-      - name: Generate Bindings
-        run: bun run tauri dev || true
-
       # pull the docker containers
       - name: Pull Docker Containers
         run: docker compose pull
@@ -80,6 +73,13 @@ jobs:
       # since the Tauri application requires it to be active
       - name: Start Map Server
         run: bun run osm:run -d
+
+      # HACK: generate bindings by running tauri dev
+      # this is expected to fail since we don't have a graphical environment
+      # and we aren't running the necessary containers at this point
+      # required because TauRPC only generates bindings in tauri dev mode
+      - name: Generate Bindings
+        run: bun run tauri dev || true
 
       # run the Selenium test suite on Linux.
       # we run it through `xvfb-run` (the dependency we installed earlier) to have a fake
