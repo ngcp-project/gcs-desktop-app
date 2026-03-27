@@ -12,7 +12,7 @@ const handleClick = (vehicleName: VehicleEnum) => {
 
 <template>
   <SidebarContent class="bg-sidebar-background">
-    <SidebarGroup>
+    <SidebarGroup class="vehicles-list">
       <VehicleCard vehicleName="ERU" @click="handleClick('ERU')" />
       <VehicleCard vehicleName="MEA" @click="handleClick('MEA')" />
       <VehicleCard vehicleName="MRA" @click="handleClick('MRA')" />

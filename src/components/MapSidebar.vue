@@ -50,7 +50,7 @@ const handleBack = () => {
         <button
           v-if="currentView === 'stage' || currentView === 'vehicle' || currentView === 'zone'"
           @click="handleBack"
-          class="absolute left-4 text-primary-foreground bg-transparent"
+          class="absolute left-4 text-primary-foreground bg-transparent back-button"
         >
           <ChevronLeft class="w-5 h-5" />
         </button>
@@ -59,9 +59,9 @@ const handleBack = () => {
           {{ currentTitle }}
         </span>
       </div>
-      <BreadcrumbNav 
+      <BreadcrumbNav
       v-if="currentView !== 'zone'"
-      :currentState="currentView" 
+      :currentState="currentView"
       />
     </SidebarHeader>
     <!-- Access the component from renderView -->

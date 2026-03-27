@@ -3,7 +3,6 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import CardFooter from "@/components/ui/card/CardFooter.vue";
 import EmergencyStop from "@/components/VehicleStatus/EmergencyStop.vue";
 import Battery from "@/components/VehicleStatus/VehicleBattery.vue";
-import Connection from "@/components/VehicleStatus/VehicleConnection.vue";
 import { constants } from "os";
 import { computed } from "vue";
 import { missionStore } from "@/lib/StoresSync";
@@ -27,12 +26,12 @@ const currentVehicleName = missionStore.getCurrentVehicleName().value;
 
 const currentStage = computed(() => {
   // Worry about stages later
-  
+
   // if (currentMissionId !== null && currentVehicleName !== null)
   //   return missionStore.getVehicleData(currentMissionId, currentVehicleName)?.stages[
   //     currentVehicleName.current_stage
   //   ];
-  // else 
+  // else
   return "No Stages Available";
 });
 

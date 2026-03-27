@@ -5,7 +5,7 @@ import SidebarGroup from '@/components/ui/sidebar/SidebarGroup.vue';
 
 <template>
   <div>
-    <SidebarGroup>
+    <SidebarGroup class="zones-list">
       <ZoneCard zoneType="KeepIn" />
       <ZoneCard zoneType="KeepOut" />
     </SidebarGroup>

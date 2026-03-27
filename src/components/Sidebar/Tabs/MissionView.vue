@@ -19,7 +19,7 @@ const handleClick = (missionId: number) => {
   <SidebarContent class="bg-sidebar-background">
   <SidebarGroup>
     <div class="flex w-full flex-col items-center">
-      <div v-if="missions && missions.length > 0" class="w-full space-y-4">
+      <div v-if="missions && missions.length > 0" class="w-full space-y-4 missions-list">
         <MissionCard v-for="(mission, index) in missions" :key="index" :missionId="mission.mission_id"
           @click="handleClick(mission.mission_id)" />
       </div>
@@ -31,7 +31,7 @@ const handleClick = (missionId: number) => {
   </SidebarContent>
   <SidebarFooter class="bg-sidebar-background">
     <Button @click="missionStore.createNewMission('new mission')"
-      class="flex flex-col items-center bg-transparent text-background shadow-none hover:bg-transparent">
+      class="flex flex-col items-center bg-transparent text-background shadow-none hover:bg-transparent add-mission-button">
       <Plus class="h-5 w-5" />
       Add Mission
     </Button>

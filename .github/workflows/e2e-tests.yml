@@ -1,0 +1,88 @@
+# run this action when the repository is pushed to
+on: [push]
+
+# the name of our workflow
+name: End-to-End Tests
+
+jobs:
+  # a single job named test
+  test:
+    # the display name of the test job
+    name: Selenium Test Runner
+
+    # run on linux only, windows does not work because
+    # linux containers cannot run in windows runners
+    # because of a lack of nested virtualization support
+    runs-on: ubuntu-latest
+
+    # the steps our job runs **in order**
+    steps:
+      # checkout the code on the workflow runner
+      - uses: actions/checkout@v6
+
+      # install system dependencies that Tauri needs to compile on Linux.
+      # note the extra dependencies for `tauri-driver` to run which are: `webkit2gtk-driver` and `xvfb`
+      - name: Tauri dependencies
+        run: |
+          sudo apt-get update &&
+          sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          libayatana-appindicator3-dev \
+          webkit2gtk-driver \
+          xvfb
+
+      # install latest stable Rust release
+      - name: Setup rust-toolchain stable
+        uses: dtolnay/rust-toolchain@stable
+
+      # setup caching for the Rust target folder
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # install the latest stable bun version at the time of writing
+      - name: Node 24
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # install the application Bun dependencies
+      - name: Bun Install
+        run: bun install --frozen-lockfile
+
+      # install the latest version of `tauri-driver`.
+      # note: the tauri-driver version is independent of any other Tauri versions
+      - name: Install tauri-driver
+        run: cargo install tauri-driver --locked
+
+      # pull the docker containers
+      - name: Pull Docker Containers
+        run: docker compose pull
+
+      # start the DB and RabbitMQ containers
+      # since the Tauri application requires them to be active
+      - name: Start DB and RabbitMQ
+        run: docker compose up -d db rabbitmq
+
+      # set up the OSM server
+      - name: Set up Map Server
+        run: bun run osm:setup
+
+      # start the OSM server
+      # since the Tauri application requires it to be active
+      - name: Start Map Server
+        run: bun run osm:run -d
+
+      # HACK: generate bindings by running tauri dev
+      # this is expected to fail since we don't have a graphical environment
+      # and we aren't running the necessary containers at this point
+      # required because TauRPC only generates bindings in tauri dev mode
+      - name: Generate Bindings
+        run: bun run tauri dev || true
+
+      # run the Selenium test suite on Linux.
+      # we run it through `xvfb-run` (the dependency we installed earlier) to have a fake
+      # display server which allows our application to run headless without any changes to the code
+      - name: Run Selenium Test Suite
+        run: xvfb-run bun run test
