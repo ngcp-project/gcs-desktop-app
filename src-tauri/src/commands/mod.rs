@@ -1,4 +1,5 @@
 pub mod commands;
+pub mod listen;
 
 pub use commands::{CommandsApi, CommandsApiImpl};
-// pub use telem::TelemApiImpl; 
+pub use listen::start_command_consumer;

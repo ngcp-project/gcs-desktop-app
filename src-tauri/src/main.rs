@@ -3,17 +3,18 @@
 
 use std::env;
 use taurpc::Router;
+mod commands;
 mod missions;
 mod telemetry;
-mod commands;
 
 use crate::telemetry::rabbitmq::RabbitMQAPI;
+use commands::commands::CommandsApi;
+use commands::listen::start_command_consumer;
+use commands::CommandsApiImpl;
 use missions::api::{MissionApi, MissionApiImpl};
 use telemetry::rabbitmq::RabbitMQAPIImpl;
-use commands::{CommandsApiImpl};
-use commands::commands::CommandsApi;
 mod init_db;
-use init_db::{clear_database, initialize_database, init_database_dummy_data};
+use init_db::{clear_database, init_database_dummy_data, initialize_database};
 
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager, RunEvent};
@@ -31,11 +32,14 @@ fn spawn_opencv_sidecar(app_handle: tauri::AppHandle) -> Result<(), String> {
     }
 
     // Spawn sidecar (sidecar function only expects the filename, not the whole path configured in externalBin)
-    let sidecar_command = app_handle
-        .shell()
-        .sidecar("opencv")
-        .map_err(|e| {println!("[tauri] Error constructing sidecar: {}", e.to_string()); e.to_string()})?;
-    let (mut rx, child) = sidecar_command.spawn().map_err(|e| {println!("[tauri] Error running sidecar: {}", e.to_string()); e.to_string()})?;
+    let sidecar_command = app_handle.shell().sidecar("opencv").map_err(|e| {
+        println!("[tauri] Error constructing sidecar: {}", e.to_string());
+        e.to_string()
+    })?;
+    let (mut rx, child) = sidecar_command.spawn().map_err(|e| {
+        println!("[tauri] Error running sidecar: {}", e.to_string());
+        e.to_string()
+    })?;
 
     // Store the child process in the app state
     if let Some(state) = app_handle.try_state::<Arc<Mutex<Option<CommandChild>>>>() {
@@ -172,10 +176,16 @@ async fn main() {
                 .to_lowercase()
                 == "true"
             {
-                // Initialize consumers
+                // Initialize consumer telemetry
                 tauri::async_runtime::spawn(async move {
                     if let Err(e) = rabbitmq.init_consumers().await {
                         eprintln!("Failed to initialize telemetry consumers: {}", e);
+                    }
+                });
+                // Initialize consumer ack command
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = start_command_consumer().await {
+                        eprintln!("Failed to initialize command consumer: {}", e)
                     }
                 });
             }
