@@ -23,7 +23,6 @@ const isHovered = ref(false);
 
 // Max number of toasts visible when collapsed (the rest are fully hidden)
 const VISIBLE_COLLAPSED = 3;
-const TOAST_HEIGHT_ESTIMATE = 72; // approx height of one toast in px
 const TOAST_GAP = 8;
 
 const startCooldown = (id:string): void => {
@@ -55,12 +54,6 @@ const sortedToasts = computed(() => {
   });
 });
 
-// track heigh with fixed estimate
-const getExpandedOffset = (arrayIndex: number): number => {
-  const stackIndex = getStackIndex(arrayIndex);
-  return stackIndex * (TOAST_HEIGHT_ESTIMATE + TOAST_GAP);
-};
-
 // Index from the front (0 = bottom/most prominent) */
 const getStackIndex = (arrayIndex: number): number => {
   return sortedToasts.value.length - 1 - arrayIndex;
@@ -86,9 +79,18 @@ const removeToast = (id: string): void => {
 };
 
 const clearAll = (): void => {
-  activeToasts.value = {};
-  Object.keys(disabledToasts).forEach((k)=> delete disabledToasts[k]);
-  console.log("All alerts cleared");
+  const remaining: Record<string, ToastData> = {};
+
+  for (const [id, toast] of Object.entries(activeToasts.value)) {
+    if (toast.type === "error" && disabledToasts[id] > 0) {
+      remaining[id] = toast;
+    } else {
+      delete disabledToasts[id];
+    }
+  }
+
+  activeToasts.value = remaining;
+  console.log("All dismissable alerts cleared");
 };
 
 const dismissToast = (id: string): void => {
@@ -139,7 +141,6 @@ listen("dismiss-all-toasts", () => {
           ]"
           :style="{
             '--stack-index': getStackIndex(index),
-            '--expanded-offset': `${getExpandedOffset(index)}px`,
           }"
           role="alert"
         >
@@ -219,24 +220,38 @@ listen("dismiss-all-toasts", () => {
 
 /* ---- Collapsed (default): peek behind front toast ---- */
 .toast-stack:not(.toast-stack--expanded) .toast-item:not(.toast-item--front) {
+  height: 72px;
+  overflow: hidden;
   transform:
     translateY(calc(var(--stack-index) * -8px))
     scale(calc(1 - var(--stack-index) * 0.04));
   opacity: calc(1 - var(--stack-index) * 0.15);
 }
 
-/* ---- Expanded: fan out upward using translateY ---- */
-.toast-stack--expanded .toast-item:not(.toast-item--front) {
-  transform: translateY(calc(-1 * var(--expanded-offset)));
-  opacity: 1;
+.toast-stack--expanded .toast-stage {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  padding-top: 16px; 
 }
 
-.toast-stack--expanded .toast-item--front {
-  transform: none;
-  opacity: 1;
+.toast-stack--expanded .toast-item {
+  position: relative !important;
+  transform: none !important;
+  opacity: 1 !important;
+  bottom: auto !important;
+  left: auto !important;
 }
 
-
+.toast-stack--expanded::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -20px;
+  right: -20px;
+  height: 800px;  /* tall enough to cover any reasonable stack */
+  pointer-events: auto;
+}
 
 .toast-stack--left .toast-stage {
   align-items: flex-start;
@@ -327,6 +342,8 @@ listen("dismiss-all-toasts", () => {
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.15s ease;
+   min-width: 5.5rem;   /* wide enough to fit "Dismiss (3)" */
+  text-align: center;
 }
 
 .toast-dismiss:hover {
@@ -344,9 +361,12 @@ listen("dismiss-all-toasts", () => {
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.toast-leave-active {
-  transition: all 0.2s ease-in;
+.toast-stack .toast-leave-active {
+  opacity: 0;
+  visibility: hidden;
   position: absolute !important;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .toast-enter-from {
@@ -356,11 +376,10 @@ listen("dismiss-all-toasts", () => {
 
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(100%);
 }
 
 .toast-move {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 </style>
