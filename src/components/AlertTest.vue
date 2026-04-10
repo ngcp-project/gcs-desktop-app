@@ -63,19 +63,6 @@ import { Button } from "@/components/ui/button";
       Keep-Out Warning
     </Button>
 
-    <Button
-      variant="outline"
-      @click="
-        emit('create-toast', {
-          id: 'test_proximity',
-          type: 'warning',
-          title: 'Warning: Vehicle Proximity',
-          description: 'ERU and MEA are within 50 ft of each other (test)',
-        })
-      "
-    >
-      Proximity Warning
-    </Button>
 
     <!-- Dismiss All -->
     <Button
