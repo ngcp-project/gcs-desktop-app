@@ -6,53 +6,53 @@
   import NullData from "./WeatherIcons/NullData.vue";
   
   interface WeatherData {
-    overcast: string,
+    cloudCoverage: string,
     wind: number,
     rain: number
   }
   
   /* 
-    Component | Chill (black) -> warning (Orange) -> unacceptable (Red)
+    Component | acceptable (black) -> warning (Orange) -> unacceptable (Red)
     ---------------------------
     CloudCoverage  | Sunny -> Cloudy
     Wind      | 0 mph -> idk mph
     Rain      | no rain -> heavy rain
   */
 
-
  const mockWeatherData: WeatherData = {
-   overcast: "sunny",
-   wind: 5, //mph
-   rain: 5 // in/h
+   cloudCoverage: "Sunny",
+   wind: 8, //mph
+   rain: 0.01 // in/h
   }; //get from state manager
+
+  const cloudCoverageStates = {
+    sun: "Sunyn",
+    partial: "Partial",
+    cloud: "Cloudy"
+  }
   const levels = {
     acceptable: "fill-black",
     warning: "fill-yellow-500",
     unacceptable: "fill-red-500"
   };
-  const cloudCoverageStates = {
-    sun: "sun",
-    partial: "partial",
-    cloud: "cloud"
-  }
+  const weatherStyles = "flex items-center gap-1";
+
   let cloudCoverageState = cloudCoverageStates.sun;
-  //compute appropriate color
-  let overcastStatus = levels.warning;
+  let cloudCoverageStatus = (mockWeatherData.cloudCoverage == 'Partial') ? levels.warning : (mockWeatherData.cloudCoverage == 'Cloudy') ? levels.unacceptable : levels.acceptable;
   let windStatus  = (mockWeatherData.wind <= 8) ? levels.acceptable : (mockWeatherData.wind <= 10) ? levels.warning : levels.unacceptable;
   let rainStatus = (mockWeatherData.rain <= 0.01) ? levels.acceptable : ( mockWeatherData.rain <= 0.02) ? levels.warning : levels.unacceptable;
-  const weatherStyles = "flex items-center gap-1";
 </script>
 <template>
   <Card class="m-2 h-fit bg-sidebar-foreground p-2 text-foreground">
     <CardContent class="mt-1 flex flex-col items-start space-y-3">
       <div :class=weatherStyles>
-          <CloudCoverage :state="cloudCoverageState"/> {{ mockWeatherData.overcast }}
+          <CloudCoverage :state="cloudCoverageState" :color="cloudCoverageStatus"/> {{ mockWeatherData.cloudCoverage }}
       </div>
       <div :class=weatherStyles>
           <Wind :color="windStatus"/> {{ mockWeatherData.wind }} mph
       </div>
       <div :class=weatherStyles>
-        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }}in/h
+        <Rain :color="rainStatus"/> {{ mockWeatherData.rain }} in/h
       </div>
     </CardContent>
   </Card>
