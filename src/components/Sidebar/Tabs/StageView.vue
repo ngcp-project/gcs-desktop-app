@@ -25,7 +25,7 @@ const stages = currentMissionId !== null && currentVehicleName !== null ? missio
     </div>
   </SidebarContent>
   <SidebarFooter class="bg-sidebar-background">
-    <Button class="flex flex-col items-center bg-transparent text-background shadow-none hover:bg-transparent" @click="
+    <Button class="flex flex-col items-center bg-transparent text-background shadow-none hover:bg-transparent add-stage-button" @click="
       currentMissionId !== null &&
       currentVehicleName !== null &&
       missionStore.addStage(currentMissionId, currentVehicleName)

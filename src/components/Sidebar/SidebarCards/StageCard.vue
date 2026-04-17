@@ -121,7 +121,7 @@ const handleEditStage = () => {
       <Trash2
         v-if="stage.stage_status === 'Inactive' && currentMissionId !== null && currentVehicleName !== null"
         @click="handleDeleteStage"
-        class="h-5 w-5 cursor-pointer text-foreground hover:text-destructive"
+        class="h-5 w-5 cursor-pointer text-foreground hover:text-destructive delete-stage-button"
       />
     </CardTitle>
 
@@ -144,13 +144,13 @@ const handleEditStage = () => {
           <component
             :is="stage.search_area.length === 0 ? Plus : (editingStageIndex === stageIndex ? Check : Pencil)"
             v-if="searchAreaEditable"
-            class="h-5 w-5 cursor-pointer text-secondary-foreground hover:text-secondary-foreground/80"
+            class="h-5 w-5 cursor-pointer text-secondary-foreground hover:text-secondary-foreground/80 setup-searcharea-button"
             @click="handleEditStage"
           />
           <component
             :is="stage.search_area.length === 0 ? EyeOff : (visibilityStates.get(props.stageID) ? EyeOff : Eye)"
             v-if="stage.search_area.length !== 0"
-            class="h-5 w-5 cursor-pointer text-secondary-foreground hover:text-secondary-foreground/80"
+            class="h-5 w-5 cursor-pointer text-secondary-foreground hover:text-secondary-foreground/80 toggle-searcharea-button"
             @click="toggleVisibility"
           />
         </div>
