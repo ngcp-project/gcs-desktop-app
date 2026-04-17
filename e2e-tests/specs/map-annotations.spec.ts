@@ -137,9 +137,11 @@ describe("Map annotations", () => {
       // the element reference still exists even if the element gets deleted,
       // but "waiting" for staleness does check if it's removed
       await driver.wait(until.stalenessOf(vertex), pauseDuration);
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
 
       await zone.findElement(By.css('svg.setup-zone-button')).click();
       await driver.wait(until.stalenessOf(vertexList[0]), pauseDuration); // all items in vertexList should no longer exist at this point
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
     });
 
     it(`should delete the created ${name} zone`, async () => {
