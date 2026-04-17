@@ -26,9 +26,9 @@
   }; //get from state manager
 
   const cloudCoverageStates = {
-    sun: "Sunyn",
+    sunny: "Sunny",
     partial: "Partial",
-    cloud: "Cloudy"
+    cloudy: "Cloudy"
   }
   const levels = {
     acceptable: "fill-black",
@@ -37,7 +37,7 @@
   };
   const weatherStyles = "flex items-center gap-1";
 
-  let cloudCoverageState = cloudCoverageStates.sun;
+  let cloudCoverageState = cloudCoverageStates.sunny;
   let cloudCoverageStatus = (mockWeatherData.cloudCoverage == 'Partial') ? levels.warning : (mockWeatherData.cloudCoverage == 'Cloudy') ? levels.unacceptable : levels.acceptable;
   let windStatus  = (mockWeatherData.wind <= 8) ? levels.acceptable : (mockWeatherData.wind <= 10) ? levels.warning : levels.unacceptable;
   let rainStatus = (mockWeatherData.rain <= 0.01) ? levels.acceptable : ( mockWeatherData.rain <= 0.02) ? levels.warning : levels.unacceptable;
