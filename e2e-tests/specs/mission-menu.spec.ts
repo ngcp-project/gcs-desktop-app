@@ -21,6 +21,7 @@ describe("Mission menu", () => {
   const pauseDuration = 25;
   const testMissionName = "foo test mission";
   const testStageName = "bar test stage";
+  const stageAmount = 5;
 
   it("should create a new mission", async () => {
     await driver.findElement(By.css('button.add-mission-button')).click();
@@ -217,6 +218,75 @@ describe("Mission menu", () => {
       const newLength = (await driver.findElements(By.css('div.stages-list > div'))).length;
       expect(newLength).to.equal(oldLength - 1);
     });
+
+    for (let i = 0; i < stageAmount; i++) {
+      it(`should create and rename stage ${i} for the ${name}`, async () => {
+        await driver.findElement(By.css('button.add-stage-button')).click();
+        await driver.sleep(pauseDuration); // wait a tick to ensure list updates
+        const stagesList = await driver.findElements(By.css('div.stages-list > div'));
+        const testStage = stagesList[stagesList.length - 1];
+        const stageNameEl = await testStage.findElement(By.css('h3 > input'));
+        const stageName = await stageNameEl.getAttribute('value');
+        expect(stageName).to.equal('New Stage');
+
+        // webdriver doesn't let you interact with an element if it's offscreen
+        // furthermore selenium's scroll action only works for the entire page, not specifc elements
+        // therefore execute a javascript snippet that scrolls to the new stage
+        driver.executeScript("arguments[0].scrollIntoView(true);", testStage);
+
+        await stageNameEl.clear();
+        await driver.sleep(pauseDuration); // wait a tick to ensure list updates
+
+        const tempStagesList = await driver.findElements(By.css('div.stages-list > div'));
+        const tempStage = tempStagesList[tempStagesList.length - 1];
+        await tempStage.findElement(By.css('h3 > input')).sendKeys(`${testStageName} ${i}`);
+        await driver.sleep(pauseDuration); // wait a tick to ensure list updates
+
+        const newStagesList = await driver.findElements(By.css('div.stages-list > div'));
+        const newTestStage = newStagesList[newStagesList.length - 1];
+        const newName = await newTestStage.findElement(By.css('h3 > input')).getAttribute('value');
+        expect(newName).to.equal(`${testStageName} ${i}`);
+      });
+    }
+
+    for (let i = 1; i < stageAmount; i++) {
+      it(`should advance from stage ${i - 1} to ${i} for the ${name}`, async () => {
+        await driver.findElement(By.css('button.back-button')).click();
+        await driver.sleep(pauseDuration); // wait a tick to ensure list updates
+        const vehicleCard = (await driver.findElements(By.css('div.vehicles-list > div')))[index];
+        const vehicleCardName = await vehicleCard.findElement(By.css('h3')).getText();
+        expect(vehicleCardName).to.equal(name);
+
+        const vehicleStage = await vehicleCard.findElement(By.css('span.current-stage')).getText();
+        expect(vehicleStage).to.equal(`Stage: ${testStageName} ${i - 1}`);
+        await vehicleCard.findElement(By.css('button.next-stage-button')).click();
+        await driver.sleep(pauseDuration); // wait a tick to ensure list updates
+        
+        const newVehicleCard = (await driver.findElements(By.css('div.vehicles-list > div')))[index];
+        const newVehicleStage = await newVehicleCard.findElement(By.css('span.current-stage')).getText();
+        expect(newVehicleStage).to.equal(`Stage: ${testStageName} ${i}`);
+
+        await newVehicleCard.click();
+        await driver.sleep(pauseDuration); // wait a tick to ensure list updates
+        await driver.findElement(By.css('button.add-stage-button')); // check for the button instead because the list doesn't exist yet
+      });
+
+      it(`should confirm stage statuses on stage ${i} for the ${name}`, async () => {
+        var stagesList = await driver.findElements(By.css('div.stages-list > div'));
+        await stagesList.forEach(async (stage, j) => {
+          var expectedStatus = "";
+          if (j > i) {
+            expectedStatus = "Inactive";
+          } else if (j < i) {
+            expectedStatus = "Complete";
+          } else {
+            expectedStatus = "Active";
+          }
+          const stageStatus = await stage.findElement(By.css('span.stage-status')).getText();
+          expect(stageStatus).to.equal(`Status: ${expectedStatus}`);
+        });
+      });
+    }
 
     it("should return to vehicles list", async () => {
       await driver.findElement(By.css('button.back-button')).click();

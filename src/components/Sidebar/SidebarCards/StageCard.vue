@@ -127,7 +127,7 @@ const handleEditStage = () => {
 
     <!-- Status Section -->
     <CardContent class="mt-2 flex flex-col items-start">
-      <span class="font-semibold">
+      <span class="font-semibold stage-status">
         Status:
         <span :class="statusStyles.statusColor[stage.stage_status]">{{ stage.stage_status }}</span>
       </span>
