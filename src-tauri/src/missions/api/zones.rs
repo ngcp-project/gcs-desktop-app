@@ -207,12 +207,14 @@ pub fn convert_zone_to_json(zone_str: &str) -> String {
                 .trim()
                 .trim_start_matches('(')
                 .trim_end_matches(')')
+                .trim()  // Trim again after removing parentheses
                 .parse::<f64>()
                 .unwrap_or(0.0);
             let long = chunk[1]
                 .trim()
                 .trim_start_matches('(')
                 .trim_end_matches(')')
+                .trim()  // Trim again after removing parentheses
                 .parse::<f64>()
                 .unwrap_or(0.0);
             format!(r#"{{"lat":{:.5},"long":{:.5}}}"#, lat, long)
@@ -220,4 +222,105 @@ pub fn convert_zone_to_json(zone_str: &str) -> String {
         .collect();
 
     format!("[{}]", coords.join(","))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_convert_zone_format_single_point() {
+        // TEST PURPOSE: Verify that a single coordinate point is correctly formatted
+        // Input: JSON array with one coordinate object
+        // Expected: PostgreSQL-style coordinate format
+
+        let json_input = r#"[{"lat":33.93257,"long":-117.63059}]"#;
+        let result = convert_zone_format(json_input);
+
+        // EXPECTED RESULT: Should format as [(lat,long)]
+        let expected = "[\n    (33.93257,-117.63059)\n]";
+        assert_eq!(result, expected, "Single point should be formatted correctly");
+    }
+
+    #[test]
+    fn test_convert_zone_format_multiple_points() {
+        // TEST PURPOSE: Verify that multiple coordinate points are correctly formatted
+        // This is the typical use case for geofence zones (polygons)
+
+        let json_input = r#"[{"lat":33.93257,"long":-117.63059},{"lat":34.05220,"long":-118.24370},{"lat":37.77490,"long":-122.41940}]"#;
+        let result = convert_zone_format(json_input);
+
+        // EXPECTED RESULT: Should format as multi-line coordinate list
+        let expected = "[\n    (33.93257,-117.63059),\n    (34.05220,-118.24370),\n    (37.77490,-122.41940)\n]";
+        assert_eq!(result, expected, "Multiple points should be formatted with proper line breaks");
+    }
+
+    #[test]
+    fn test_convert_zone_format_precision() {
+        // TEST PURPOSE: Verify that coordinate precision is preserved (5 decimal places)
+        // GPS coordinates need high precision for accuracy
+
+        let json_input = r#"[{"lat":33.123456789,"long":-117.987654321}]"#;
+        let result = convert_zone_format(json_input);
+
+        // EXPECTED RESULT: Should round to 5 decimal places
+        let expected = "[\n    (33.12346,-117.98765)\n]";
+        assert_eq!(result, expected, "Should preserve 5 decimal places precision");
+    }
+
+    #[test]
+    fn test_convert_zone_to_json_single_point() {
+        // TEST PURPOSE: Verify that a single coordinate in zone format converts to JSON
+        // This is the inverse operation of convert_zone_format
+
+        let zone_input = "[(33.93257,-117.63059)]";
+        let result = convert_zone_to_json(zone_input);
+
+        // EXPECTED RESULT: Should produce valid JSON array with one coordinate object
+        let expected = r#"[{"lat":33.93257,"long":-117.63059}]"#;
+        assert_eq!(result, expected, "Single point should convert to JSON correctly");
+    }
+
+    #[test]
+    fn test_convert_zone_to_json_multiple_points() {
+        // TEST PURPOSE: Verify that multiple coordinates in zone format convert to JSON
+        // This tests the chunking logic that pairs lat/long values
+
+        let zone_input = "[(33.93257,-117.63059),(34.05220,-118.24370),(37.77490,-122.41940)]";
+        let result = convert_zone_to_json(zone_input);
+
+        // EXPECTED RESULT: Should produce valid JSON array with three coordinate objects
+        let expected = r#"[{"lat":33.93257,"long":-117.63059},{"lat":34.05220,"long":-118.24370},{"lat":37.77490,"long":-122.41940}]"#;
+        assert_eq!(result, expected, "Multiple points should convert to JSON correctly");
+    }
+
+    #[test]
+    fn test_convert_zone_to_json_with_whitespace() {
+        // TEST PURPOSE: Verify that extra whitespace is handled correctly
+        // Zone strings from database might have varying whitespace
+
+        let zone_input = "[  ( 33.93257 , -117.63059 )  ]";
+        let result = convert_zone_to_json(zone_input);
+
+        // EXPECTED RESULT: Should ignore whitespace and parse correctly
+        let expected = r#"[{"lat":33.93257,"long":-117.63059}]"#;
+        assert_eq!(result, expected, "Should handle whitespace correctly");
+    }
+
+    #[test]
+    fn test_convert_zone_roundtrip() {
+        // TEST PURPOSE: Verify that converting JSON → Zone → JSON produces equivalent result
+        // This ensures the two functions are true inverses of each other
+
+        let original_json = r#"[{"lat":33.93257,"long":-117.63059},{"lat":34.05220,"long":-118.24370}]"#;
+
+        // Convert JSON to zone format
+        let zone_format = convert_zone_format(original_json);
+
+        // Convert back to JSON
+        let result_json = convert_zone_to_json(&zone_format);
+
+        // EXPECTED RESULT: Should match original JSON
+        assert_eq!(result_json, original_json, "Roundtrip conversion should preserve data");
+    }
 }
