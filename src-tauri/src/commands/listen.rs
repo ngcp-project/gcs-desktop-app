@@ -4,6 +4,7 @@ use lapin::{
     types::FieldTable,
     Channel, Connection, ConnectionProperties, Consumer,
 };
+use serde_json::{Value, from_slice, to_string_pretty};
 
 /// Start the command consumer as a long-lived background task.
 /// Spawns the actual consumer loop which maintains reconnection on failure.
@@ -117,6 +118,15 @@ async fn handle_message(data: &[u8], channel: &Channel, delivery_tag: u64) {
     let message_body = std::str::from_utf8(data).unwrap_or("<Invalid UTF-8>");
     println!("[Consumer] Received message: {}", message_body);
 
+    let formatted_body = match from_slice::<Value>(data) {
+        Ok(json) => to_string_pretty(&json).unwrap_or_else(|_| "Error formatting JSON".to_string()),
+        Err(_) => String::from_utf8_lossy(data).to_string(),
+    };
+
+    println!("--- New Message ---");
+    println!("{}", formatted_body);
+    println!("-------------------");
+    
     // TODO: Parse the message into a CommandAckStruct
     // Acknowledge the message to remove it from the queue
 
