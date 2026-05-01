@@ -23,7 +23,6 @@ const isHovered = ref(false);
 
 // Max number of toasts visible when collapsed (the rest are fully hidden)
 const VISIBLE_COLLAPSED = 3;
-const TOAST_GAP = 8;
 
 const startCooldown = (id:string): void => {
   disabledToasts[id] = 3;
@@ -49,8 +48,14 @@ const dismissCooldown = (toast:ToastData):number=>{
 // Sorted toast list for rendering: Warnings first, errors last 
 const sortedToasts = computed(() => {
   return Object.values(activeToasts.value).sort((a, b) => {
-    const priority = (type: string): number => (type === "error" ? 1 : 0);
-    return priority(a.type) - priority(b.type);
+    const getPriority = (toast: any): number => {
+      //use explicit priority
+      if (toast.priority !== undefined) return toast.priority;
+
+      //fallback
+      return toast.type === "error" ? 1 : 0;
+    }
+    return getPriority(b) - getPriority(a);
   });
 });
 
