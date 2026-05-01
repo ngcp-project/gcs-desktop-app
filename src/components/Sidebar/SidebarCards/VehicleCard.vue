@@ -68,13 +68,13 @@ const patientStatusStyles = {
         @click.stop="missionStore.transitionStage(missionId, props.vehicleName)">
         Next Stage
       </Button>
-      <span v-if="vehicle.is_auto !== null " class="font-semibold">
+      <!-- <span v-if="vehicle.is_auto !== null " class="font-semibold">
         <Toggle 
         class="bg-primary text-primary-foreground ml-2 hover:bg-primary/90 hover:text-primary-foreground"
         @click.stop="missionStore.setAutoMode(missionId, props.vehicleName, !vehicle.is_auto)">
         Auto 
         </Toggle>
-      </span>
+      </span> -->
     </CardFooter>
   </Card>
 </template>

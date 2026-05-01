@@ -8,7 +8,7 @@
       :center="[mapStore.mapState.mapOrigin[0] as LatLng[0], mapStore.mapState.mapOrigin[1] as LatLng[1]]"
       @ready="handleReady"
     >
-      <GeomanController />
+      <GeomanController v-if="mapDebugEnabled()" />
       <l-tile-layer
         :url="mapStore.mapState.localTileURL"
         :minZoom="14"
@@ -55,7 +55,7 @@ const getVehicleIcon = (vehicle: VehicleEnum) => {
     ERU: ERUIcon,
     MRA: MRAIcon
   };
-  
+
   return icon({
     iconUrl: iconMap[vehicle],
     iconSize: [32, 32],
@@ -63,6 +63,9 @@ const getVehicleIcon = (vehicle: VehicleEnum) => {
   });
 };
 
+function mapDebugEnabled() {
+  return JSON.parse(import.meta.env.VITE_MAP_DEBUG || 'false'); // Parse into JSON to convert string to bool
+}
 </script>
 
 <style>

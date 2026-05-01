@@ -51,10 +51,10 @@ const handleMissionNameChange = (event: Event) => {
       </span>
 
       <!-- Trash Icon -->
-      <div v-if="mission.mission_status == 'Inactive'" class="cursor-pointer">
+      <div v-if="mission.mission_status == 'Inactive'" class="cursor-pointer trash-mission-button">
         <Trash2
           @click.stop="missionStore.deleteMission(mission.mission_id)"
-          class="h-5 w-5 text-foreground hover:text-destructive"
+          class="h-5 w-5 text-foreground hover:text-destructive delete-mission-button"
         />
       </div>
     </CardTitle>
@@ -71,14 +71,14 @@ const handleMissionNameChange = (event: Event) => {
 
     <!-- Submit Button -->
     <CardFooter class="mt-4 justify-start">
-      <Button 
-        class="mr-2" 
+      <Button
+        class="mr-2 start-mission-button"
         :disabled="mission.mission_status != 'Inactive'"
         @click.stop="missionStore.startMission(mission.mission_id)"
       >
         Start
       </Button>
-      <Button @click.stop="handleZoneButtonClick"> Zones </Button>
+      <Button class="zones-mission-button" @click.stop="handleZoneButtonClick"> Zones </Button>
     </CardFooter>
   </Card>
 </template>

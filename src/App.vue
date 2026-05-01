@@ -107,6 +107,10 @@ provide("mission-info-provider", {
 // DEFAULT COLOR SCHEME TO LIGHT MODE
 useColorMode().value = "light";
 
+function errorToastDebugEnabled() {
+  return JSON.parse(import.meta.env.VITE_ERROR_TOAST_DEBUG || 'false'); // Parse into JSON to convert string to bool
+}
+
 export type { Coordinate, Vehicle, Stage };
 </script>
 
@@ -114,8 +118,9 @@ export type { Coordinate, Vehicle, Stage };
 
   <AlertToast/>
   <!-- Toast testing bar -->
-   <AlertTest/>
-  
+  <div class="fixed bottom-0 z-50 flex w-full items-center justify-center gap-3 pb-3">
+    <AlertTest v-if="errorToastDebugEnabled()" />
+  </div>
 
   <div class="flex h-[100dvh] flex-col">
     <SidebarProvider class="min-h-0 flex-grow overflow-y-hidden">
