@@ -1,6 +1,8 @@
 import { ref } from "vue";
 import { LatLngTuple as LatLng, LatLngExpression } from "leaflet";
 import * as L from "leaflet";
+//import 'leaflet.coordinates';
+import { MousePosition } from "leaflet.mouseposition.ts";
 import {
   GeoCoordinateStruct,
   MissionsStruct,
@@ -61,6 +63,12 @@ export const mapPiniaStore = defineStore('map', () => {
     (mapState.value as { map: LeafletMapGeoman | null }).map = refValue;
     // Assign preInitialized geoJSON to the map
     mapState.value.layers.addTo(mapLeaflet);
+
+    // Add mouse coordinate tracking to map layer
+    const mousePosition = new MousePosition({
+      position: "bottomleft",
+    });
+    mousePosition.addTo(mapLeaflet);
 
     updateLayerTracking(missionStore.getAllMissions().value as MissionsStruct);
   };
