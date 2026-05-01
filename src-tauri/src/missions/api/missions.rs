@@ -11,6 +11,7 @@ use crate::missions::sql::{update_mission_name, delete_mission, update_mission_s
 use crate::commands::commands::{CommandsApiImpl, GeoCoordinate};
 use crate::commands::CommandsApi;
 use super::MissionApiImpl;
+use crate::telemetry::geos::KEEP_OUT_ZONES;
 
 impl MissionApiImpl {
     pub async fn get_mission_data_helper(&self, mission_id: i32) -> MissionStruct {
@@ -79,6 +80,9 @@ impl MissionApiImpl {
             .expect("Failed to delete mission from database");
 
         state.missions.remove(mission_index);
+        // remove from the hashmap
+        let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire lock");
+        keep_out_zones.remove(&mission_id);
         self.emit_state_update(&app_handle, &state)
     }
 

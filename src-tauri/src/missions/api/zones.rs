@@ -8,6 +8,7 @@ use tauri::{AppHandle, Runtime};
 use crate::missions::types::{GeofenceType, ZoneType};
 use crate::missions::sql::update_zones;
 use serde_json::Value;
+use crate::telemetry::geos::KEEP_OUT_ZONES;
 
 // We need to import the struct to implement methods on it.
 use super::MissionApiImpl;
@@ -69,8 +70,12 @@ impl MissionApiImpl {
                 //     return Err("KeepOut index out of range".into());
                 // }
                 if let Some(zone) = mission.zones.keep_out_zones.get_mut(zone_index as usize) {
-                    *zone = zone_coords;
+                    *zone = zone_coords.clone();
                 }
+                let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire write lock");
+                let key = mission.mission_id;
+                keep_out_zones.entry(key).or_default().push(zone_coords);
+                println!("Updated structure to showcase {:?}", keep_out_zones);
             }
         }
 
@@ -130,6 +135,12 @@ impl MissionApiImpl {
                     return Err("KeepOut index out of range".into());
                 }
                 mission.zones.keep_out_zones.remove(zone_index as usize);
+
+                let mut keep_out_zones = KEEP_OUT_ZONES.write().expect("Failed to acquire locks");
+                let key = mission.mission_id;
+                keep_out_zones.entry(key).or_default().remove(zone_index as usize);
+                println!("Updated structure to showcase {:?}", keep_out_zones);
+
             }
         }
 

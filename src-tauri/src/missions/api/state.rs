@@ -6,6 +6,7 @@ the database and building/returning mission state
 
 use crate::missions::types::*;
 use crate::missions::sql::{insert_new_stage, insert_new_mission};
+use crate::telemetry::geos::KEEP_OUT_ZONES;
 use super::zones::convert_zone_to_json; 
 use super::MissionApiImpl;
 
@@ -13,6 +14,10 @@ use sqlx::Row;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+
+// store the last state mission in a global variable
+// by default is -1
+pub static LAST_STATE: Mutex<i32> = Mutex::const_new(-1);
 
 impl MissionApiImpl {
     /// Create new instance with initial state
@@ -68,6 +73,8 @@ impl MissionApiImpl {
                 // Set current mission ID if a mission has a status of "Active"
                 if mission[0].try_get::<String, _>("status").unwrap_or_else(|_| "Inactive".to_string()) == "Active" {
                     initial_state.current_mission = mission_id;
+                    let mut last_state = LAST_STATE.lock().await;
+                    *last_state = mission_id;
                 }
 
                 let mea_row = mission.iter()
@@ -252,6 +259,13 @@ impl MissionApiImpl {
                                 .collect(),
                     },
                 });
+                // Populate runtime KEEP_OUT_ZONES map from persisted mission keep_out_zones
+                {
+                    let mission_ref = initial_state.missions.last().unwrap();
+                    let mission_keepouts = mission_ref.zones.keep_out_zones.clone();
+                    let mut map = KEEP_OUT_ZONES.write().expect("Failed to acquire write lock");
+                    map.insert(mission_ref.mission_id, mission_keepouts);
+                }
             }
         } 
 
