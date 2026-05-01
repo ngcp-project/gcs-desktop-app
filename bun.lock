@@ -17,7 +17,7 @@
         "embla-carousel-fade": "^8.6.0",
         "embla-carousel-vue": "^8.6.0",
         "express": "^4.21.2",
-        "leaflet.mouseposition.ts": "^0.1.4",
+        "leaflet.mouseposition.ts": "^0.1.5",
         "lucide-vue-next": "^0.477.0",
         "mocha": "^11.7.5",
         "pinia": "^3.0.4",
@@ -730,7 +730,7 @@
 
     "leaflet": ["leaflet@1.9.4", "", {}, "sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA=="],
 
-    "leaflet.mouseposition.ts": ["leaflet.mouseposition.ts@0.1.4", "", { "dependencies": { "react": "^17.0.2", "react-dom": "^17.0.2" } }, "sha512-CfBCGmcFAWwL98FXcAsVTrN6FCfqakhNLlwgF+2w9rcj1vL0UKX9KpYMY4Sp3tQ9WREO6cSAjRav5nCRvRvqdA=="],
+    "leaflet.mouseposition.ts": ["leaflet.mouseposition.ts@0.1.5", "", { "dependencies": { "react": "^17.0.2", "react-dom": "^17.0.2" } }, "sha512-9bgg6ibdY1xisVDocqZ+bvXETJpPEzolo2IMF/iADW4jTjXzfIkdzYv7RL6/PB0GBNJuXaYfBCGYicsUfLZ9LA=="],
 
     "levn": ["levn@0.4.1", "", { "dependencies": { "prelude-ls": "^1.2.1", "type-check": "~0.4.0" } }, "sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ=="],
 
