@@ -37,7 +37,7 @@
   };
   const weatherStyles = "flex items-center gap-1";
 
-  let cloudCoverageState = cloudCoverageStates.sunny;
+  let cloudCoverageState = mockWeatherData.cloudCoverage;
   let cloudCoverageStatus = (mockWeatherData.cloudCoverage == 'Partial') ? levels.warning : (mockWeatherData.cloudCoverage == 'Cloudy') ? levels.unacceptable : levels.acceptable;
   let windStatus  = (mockWeatherData.wind <= 8) ? levels.acceptable : (mockWeatherData.wind <= 10) ? levels.warning : levels.unacceptable;
   let rainStatus = (mockWeatherData.rain <= 0.01) ? levels.acceptable : ( mockWeatherData.rain <= 0.02) ? levels.warning : levels.unacceptable;
