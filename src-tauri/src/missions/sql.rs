@@ -171,6 +171,24 @@ pub async fn delete_stage(
     Ok(())
 }
 
+pub async fn reset_vehicle_current_stage(
+    db_conn: PgPool,
+    mission_id: i32,
+    vehicle_name: String,
+) -> Result<(), sqlx::Error> {
+    query("
+        UPDATE vehicles SET current_stage_id = -1
+        WHERE mission_id = $1 AND vehicle_name = $2
+    ")
+    .bind(mission_id)
+    .bind(vehicle_name)
+    .execute(&db_conn)
+    .await
+    .expect("Failed to reset vehicle current stage");
+
+    Ok(())
+}
+
 
 pub async fn update_stage_name(
     db_conn: PgPool,
