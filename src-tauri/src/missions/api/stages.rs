@@ -5,7 +5,7 @@ Implement helper methods on MissionApiImpl for stage-level operations
 
 use tauri::{AppHandle, Runtime};
 use crate::missions::types::*;
-use crate::missions::sql::{select_vehicle_from_mission, update_stage_area, delete_stage, update_stage_name, transition_stage};
+use crate::missions::sql::{select_vehicle_from_mission, update_stage_area, delete_stage, update_stage_name, transition_stage, reset_vehicle_current_stage};
 use crate::commands::commands::{CommandsApiImpl, GeoCoordinate};
 use crate::commands::CommandsApi;
 use super::MissionApiImpl;
@@ -147,6 +147,18 @@ impl MissionApiImpl {
             .expect("Failed to delete stage from database");
 
         vehicle.stages.remove(stage_index);
+
+        if vehicle.current_stage == stage_id {
+            vehicle.current_stage = -1;
+            reset_vehicle_current_stage(
+                self.db.clone(),
+                mission_id,
+                vehicle.vehicle_name.to_string(),
+            )
+            .await
+            .expect("Failed to reset vehicle current stage");
+        }
+
         self.emit_state_update(&app_handle, &state)
     }
 
