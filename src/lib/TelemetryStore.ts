@@ -7,6 +7,7 @@ import { ref, computed } from "vue";
 import { LatLngExpression } from "leaflet";
 import { defineStore } from "pinia";
 import { mapPiniaStore } from "./MapStore";
+import { emit } from "@tauri-apps/api/event";
 
 // --------------------------
 // Create TauRPC proxy
@@ -17,6 +18,9 @@ const taurpc = createTauRPCProxy();
 // This is assumed to return a VehicleTelemetryData structure
 const initialState: VehicleTelemetryData = await taurpc.telemetry.get_default_data();
 
+//flag for mea mission start
+const mea_start = ref(false);
+
 // =============================================
 // Zustand Store
 // =============================================
@@ -25,6 +29,21 @@ export const telemetryPiniaStore = defineStore('telemetry', ()=>{
   const mapStore = mapPiniaStore();
   const syncRustState = (rustState: VehicleTelemetryData) => {
     telemetryState.value = rustState;
+
+    // Check for MEA's first packet (mission start confirmation)
+    if (!mea_start.value && rustState.MEA) {
+      mea_start.value = true;
+      // Emit mission start toast
+      emit("create-toast", {
+        id: "mission_start_confirmation",
+        type: "info",
+        title: "Mission Start Confirmed",
+        description: "MEA has sent initial telemetry packet. Mission can begin.",
+        priority: 0,
+      });
+      console.log("MEA mission start packet received");
+    }
+
     // Update vehicle markers
     Object.entries(rustState).forEach(([vehicle, data]) => {
       if (data.current_position) {
