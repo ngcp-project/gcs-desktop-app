@@ -8,7 +8,7 @@ import {
   ZoneType,
   StageStruct
 } from "@/lib/bindings";
-import { Coordinates } from "@/components/map/MapCoordinates";
+import { Coordinates } from "@/components/map/MapCoordinates.vue";
 import { missionPiniaStore } from "./MissionStore";
 import {
   ZoneLayer,
