@@ -33,7 +33,7 @@ const Coordinates = L.Control.extend({
     this._container = L.DomUtil.create('div', 'leaflet-control-mouseposition');
     L.DomEvent.disableClickPropagation(this._container);
     map.on('mousemove', this._onMouseMove, this);
-    this._container.innerHTML = "";
+    this._container.innerHTML = "Lat: " + "<br />" + "Lng: ";
     return this._container;
   },
 
