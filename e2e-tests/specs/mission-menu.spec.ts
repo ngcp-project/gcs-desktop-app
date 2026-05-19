@@ -261,7 +261,15 @@ describe("Mission menu", () => {
 
         const vehicleStage = await vehicleCard.findElement(By.css('span.current-stage')).getText();
         expect(vehicleStage).to.equal(`Stage: ${testStageName} ${i - 1}`);
-        await vehicleCard.findElement(By.css('button.next-stage-button')).click();
+
+        const vehicleNextStageButton = vehicleCard.findElement(By.css('button.next-stage-button'));
+
+        // webdriver doesn't let you interact with an element if it's offscreen
+        // furthermore selenium's scroll action only works for the entire page, not specifc elements
+        // therefore execute a javascript snippet that scrolls to the new stage
+        driver.executeScript("arguments[0].scrollIntoView(true);", vehicleNextStageButton);
+
+        await vehicleNextStageButton.click();
         await driver.sleep(pauseDuration); // wait a tick to ensure list updates
         
         const newVehicleCard = (await driver.findElements(By.css('div.vehicles-list > div')))[index];
