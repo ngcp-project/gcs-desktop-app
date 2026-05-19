@@ -34,6 +34,7 @@ const TILE_URL = "http://localhost:8080/tile/{z}/{x}/{y}.png";
 // =============================================
 // Store Implementation
 // =============================================
+const maxVertices = 5;
 export const mapPiniaStore = defineStore('map', () => {
   const mapState = ref<MapState>({
     map: null,
@@ -80,8 +81,7 @@ export const mapPiniaStore = defineStore('map', () => {
   const logMapStore = () => {
     console.log(mapState);
   };
-  const hello = missionPiniaStore();
-  console.log("Asdasdsadasd", hello);
+
   // // Layer Management Methods
   const updateZonePolygon = (missionId: number, type: ZoneType, zoneIndex: number) => {
     const map = mapState.value.map?.leafletObject;
@@ -90,9 +90,33 @@ export const mapPiniaStore = defineStore('map', () => {
     const layerTrackedZone =
       mapState.value.layerTracking.missions[missionId].zones[type][zoneIndex];
 
+
     // not pushing in zonelayer type, pushing in empty object or L.Polygon layer
     if (!layerTrackedZone || Object.keys(layerTrackedZone).length === 0) {
       // If layerTrackedZone isnt initialized enable Geoman draw mode
+      let vertices = 0;
+      map.once("pm:drawstart", ({ workingLayer }) => {
+        console.log("start");
+        const polygon = workingLayer as L.Polygon;
+        const createPolygon = () => {
+          const latlngs = polygon.getLatLngs() as L.LatLng[];
+          const geoCoordinateStructs: GeoCoordinateStruct[] = latlngs.map((latlng) => ({
+            lat: latlng.lat,
+            long: latlng.lng
+          }));
+          missionStore.updateZone(missionId, type, zoneIndex, geoCoordinateStructs);
+          workingLayer.remove();
+          map.pm.disableDraw();
+        }
+        polygon.on("pm:vertexadded", (e) => {
+          vertices++;
+          console.log(vertices);
+          if (vertices === maxVertices) {
+            createPolygon();
+            map.off("pm:create");
+          }
+        });
+      });
       map.pm.enableDraw("Polygon");
       // .once will ensure that theres only 1 create event listener per function call
       map.once("pm:create", (e) => {
