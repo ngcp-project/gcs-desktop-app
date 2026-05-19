@@ -90,29 +90,31 @@ export const mapPiniaStore = defineStore('map', () => {
     const layerTrackedZone =
       mapState.value.layerTracking.missions[missionId].zones[type][zoneIndex];
 
+      const createPolygon = (latlngs: L.LatLng[]  ) => {
+        const geoCoordinateStructs: GeoCoordinateStruct[] = latlngs.map((latlng) => ({
+          lat: latlng.lat,
+          long: latlng.lng
+        }));
+        // Store newly created Geoman layer
+        missionStore.updateZone(missionId, type, zoneIndex, geoCoordinateStructs);
+        map.pm.disableDraw();
+      }
 
     // not pushing in zonelayer type, pushing in empty object or L.Polygon layer
     if (!layerTrackedZone || Object.keys(layerTrackedZone).length === 0) {
       // If layerTrackedZone isnt initialized enable Geoman draw mode
+
+      //terminate editing and auto complete when vertices === maxVertices
       let vertices = 0;
       map.once("pm:drawstart", ({ workingLayer }) => {
         console.log("start");
         const polygon = workingLayer as L.Polygon;
-        const createPolygon = () => {
-          const latlngs = polygon.getLatLngs() as L.LatLng[];
-          const geoCoordinateStructs: GeoCoordinateStruct[] = latlngs.map((latlng) => ({
-            lat: latlng.lat,
-            long: latlng.lng
-          }));
-          missionStore.updateZone(missionId, type, zoneIndex, geoCoordinateStructs);
-          workingLayer.remove();
-          map.pm.disableDraw();
-        }
         polygon.on("pm:vertexadded", (e) => {
           vertices++;
           console.log(vertices);
           if (vertices === maxVertices) {
-            createPolygon();
+            createPolygon(polygon.getLatLngs() as L.LatLng[]);
+            //nuke "pm:create" event listener to prevent layer overrides
             map.off("pm:create");
           }
         });
@@ -120,20 +122,8 @@ export const mapPiniaStore = defineStore('map', () => {
       map.pm.enableDraw("Polygon");
       // .once will ensure that theres only 1 create event listener per function call
       map.once("pm:create", (e) => {
-        // Store newly created Geoman layer
         const layer = e.layer as L.Polygon;
-
-        // Get latLngs of create polygon
-        const latlngs = layer.getLatLngs()[0] as L.LatLng[];
-
-        // Convert leaflet latlng to our GeoCoordinateStruct[]
-        const geoCoordinateStructs: GeoCoordinateStruct[] = latlngs.map((latlng) => ({
-          lat: latlng.lat,
-          long: latlng.lng
-        }));
-
-        // Update the zone in the mission store with new geoCoordinates
-        missionStore.updateZone(missionId, type, zoneIndex, geoCoordinateStructs);
+        createPolygon(layer.getLatLngs()[0] as L.LatLng[]);
         // Delete newly created layer since we want to create polygons from layerTracking
         layer.remove();
       });
