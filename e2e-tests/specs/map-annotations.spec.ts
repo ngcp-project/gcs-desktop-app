@@ -18,7 +18,7 @@ describe("Map annotations", () => {
     await driver.quit();
   });
 
-  const pauseDuration = 25;
+  const pauseDuration = 50;
 
   it("should create a new mission", async () => {
     await driver.findElement(By.css('button.add-mission-button')).click();

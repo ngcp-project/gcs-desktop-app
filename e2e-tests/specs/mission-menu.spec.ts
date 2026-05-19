@@ -18,7 +18,7 @@ describe("Mission menu", () => {
     await driver.quit();
   });
 
-  const pauseDuration = 25;
+  const pauseDuration = 50;
   const testMissionName = "foo test mission";
   const testStageName = "bar test stage";
   const stageAmount = 5;
