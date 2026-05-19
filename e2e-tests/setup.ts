@@ -11,8 +11,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export const mochaHooks = {
   async beforeAll() {
-    // set timeout to 2 minutes to allow the program to build if it needs to
-    this.timeout(120000);
+    // set timeout to 3 minutes to allow the program to build if it needs to
+    this.timeout(180000);
 
     // ensure the app has been built
     spawnSync('bun', ['run', 'tauri', 'build', '--config', 'src-tauri/tauri.conf.test.json', '--debug', '--no-bundle'], {
