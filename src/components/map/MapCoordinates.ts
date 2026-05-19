@@ -3,8 +3,8 @@
 // Distributed under the MIT License.
 // https://github.com/ardhi/Leaflet.MousePosition/blob/c32f1c84ec49dbf7ad599c51c8659d5e08af0f97/src/L.Control.MousePosition.js
 
-<script lang="ts">
 import L, { LeafletMouseEvent } from "leaflet";
+import "./MapCoordinates.css";
 
 interface CoordinatesControlOptions extends L.ControlOptions {
   digits?: number;
@@ -16,7 +16,7 @@ interface CoordinatesControl extends L.Control {
   _onMouseMove: (e: LeafletMouseEvent) => void;
 }
 
-const Coordinates = L.Control.extend({
+export const Coordinates = L.Control.extend({
   options: {
     position: "bottomleft",
     digits: 4,
@@ -41,18 +41,3 @@ const Coordinates = L.Control.extend({
     map.off('mousemove', this._onMouseMove)
   },
 });
-
-export { Coordinates }
-</script>
-
-<style lang="css">
-.leaflet-container .leaflet-control-mouseposition {
-  background-color: #FFFFFFB0;
-  padding: 0.05em 0.3em;
-  margin: 16px;
-  color: #000;
-  border-radius: 4px;
-  box-shadow: 0 0 4px #000;
-  font-size: 1.6em;
-}
-</style>
