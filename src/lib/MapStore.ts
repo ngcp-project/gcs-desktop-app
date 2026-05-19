@@ -82,7 +82,7 @@ export const mapPiniaStore = defineStore('map', () => {
     console.log(mapState);
   };
 
-  // // Layer Management Methods
+  // Layer Management Methods
   const updateZonePolygon = (missionId: number, type: ZoneType, zoneIndex: number) => {
     const map = mapState.value.map?.leafletObject;
     if (!map) return;
@@ -102,16 +102,13 @@ export const mapPiniaStore = defineStore('map', () => {
 
     // not pushing in zonelayer type, pushing in empty object or L.Polygon layer
     if (!layerTrackedZone || Object.keys(layerTrackedZone).length === 0) {
-      // If layerTrackedZone isnt initialized enable Geoman draw mode
 
       //terminate editing and auto complete when vertices === maxVertices
       let vertices = 0;
       map.once("pm:drawstart", ({ workingLayer }) => {
-        console.log("start");
         const polygon = workingLayer as L.Polygon;
         polygon.on("pm:vertexadded", (e) => {
           vertices++;
-          console.log(vertices);
           if (vertices === maxVertices) {
             createPolygon(polygon.getLatLngs() as L.LatLng[]);
             //nuke "pm:create" event listener to prevent layer overrides
