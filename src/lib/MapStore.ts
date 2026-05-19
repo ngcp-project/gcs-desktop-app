@@ -8,6 +8,7 @@ import {
   ZoneType,
   StageStruct
 } from "@/lib/bindings";
+import { Coordinates } from "@/components/map/MapCoordinates.vue";
 import { missionPiniaStore } from "./MissionStore";
 import {
   ZoneLayer,
@@ -61,6 +62,10 @@ export const mapPiniaStore = defineStore('map', () => {
     (mapState.value as { map: LeafletMapGeoman | null }).map = refValue;
     // Assign preInitialized geoJSON to the map
     mapState.value.layers.addTo(mapLeaflet);
+
+    // Add mouse coordinate tracking to map layer
+    const coordinates = new Coordinates({});
+    coordinates.addTo(mapLeaflet);
 
     updateLayerTracking(missionStore.getAllMissions().value as MissionsStruct);
   };
