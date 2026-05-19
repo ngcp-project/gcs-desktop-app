@@ -96,11 +96,13 @@ describe("Map annotations", () => {
 
       // hidden
       await zone.findElement(By.css('svg.toggle-zone-button')).click();
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
       expect(await zoneMapPath.getAttribute('stroke-opacity')).to.equal('0');
       expect(await zoneMapPath.getAttribute('fill-opacity')).to.equal('0');
 
       // shown
       await zone.findElement(By.css('svg.toggle-zone-button')).click();
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
       expect(await zoneMapPath.getAttribute('stroke-opacity')).to.equal('1');
       expect(await zoneMapPath.getAttribute('fill-opacity')).to.equal('0.2');
     });

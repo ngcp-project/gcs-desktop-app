@@ -155,11 +155,13 @@ describe("Mission menu", () => {
 
       // hidden
       await testStage.findElement(By.css('svg.toggle-searcharea-button')).click();
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
       expect(await stageMapPath.getAttribute('stroke-opacity')).to.equal('0');
       expect(await stageMapPath.getAttribute('fill-opacity')).to.equal('0');
 
       // shown
       await testStage.findElement(By.css('svg.toggle-searcharea-button')).click();
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
       expect(await stageMapPath.getAttribute('stroke-opacity')).to.equal('1');
       expect(await stageMapPath.getAttribute('fill-opacity')).to.equal('0.2');
     });
