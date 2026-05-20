@@ -107,7 +107,7 @@ export const mapPiniaStore = defineStore('map', () => {
       let vertices = 0;
       map.once("pm:drawstart", ({ workingLayer }) => {
         const polygon = workingLayer as L.Polygon;
-        polygon.on("pm:vertexadded", (e) => {
+        polygon.on("pm:vertexadded", () => {
           vertices++;
           if (vertices === maxVertices) {
             createPolygon(polygon.getLatLngs() as L.LatLng[]);
@@ -126,7 +126,7 @@ export const mapPiniaStore = defineStore('map', () => {
       });
     } else {
       // Zone has Polygon, so we can edit it
-      const editedLayer = (layerTrackedZone as ZoneLayer).layer;
+      const editedLayer = (layerTrackedZone as ZoneLayer).layer as L.Polygon;
 
       // TODO: possibly add another ui element to explicitly mark when editing is done
       // toggle the edit mode to allow show completing the zone
@@ -135,8 +135,22 @@ export const mapPiniaStore = defineStore('map', () => {
         return;
       }
 
+      const getVertexCount = (polygon : L.Polygon) => {
+        return (polygon.getLatLngs()[0] as L.LatLng[]).length;
+      }
+      const hideMarkers = () => {
+        (editedLayer.pm as any)._createMiddleMarker = () => {};
+      }
+      //disable middle markers if polygon-vertices >= maxVertices
+      if (getVertexCount(editedLayer) >= maxVertices)
+          hideMarkers();
+
       // enable edit mode on the selected polygon
-      editedLayer.pm.enable();
+      editedLayer.pm.enable({addVertexValidation : ({layer}) => {
+        const count = getVertexCount(layer as L.Polygon)
+        // restrict user from adding more vertices if verticeCount >= maxVertices.
+        return (count  < maxVertices)
+      }});
 
       // listen to when the layer edit is complete
       editedLayer.once("pm:update", (e) => {
