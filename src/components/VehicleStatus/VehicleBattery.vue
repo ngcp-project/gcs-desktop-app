@@ -1,22 +1,27 @@
 <script lang="ts" setup>
-import { defineProps } from "vue";
+import { defineProps, computed } from "vue";
 
-defineProps<{
+const {percentage} = defineProps<{
   percentage: number;
   charging: boolean;
 }>();
+const batteryColor = computed(() => {
+  if (percentage <= 20) return { border: "border-red-500", bg: "bg-red-500" };
+  return { border: "border-black", bg: "bg-black" };
+});
+
 </script>
 
 <template>
   <div class="relative flex flex-col h-full w-full items-center">
     <!-- Smaller tip -->
-    <div class="h-[1px] w-1 border border-[#020817]"></div> <!-- Reduced width/height -->
+    <div :class="`h-[1px] w-1 border ${batteryColor.border}`"></div> <!-- Reduced width/height -->
     
     <!-- Smaller main battery body -->
-    <div class="relative flex h-4 w-3 rounded-[2px] border-[1.5px] border-[#020817] items-end"> <!-- Halved dimensions -->
+    <div :class="`relative flex h-4 w-3 rounded-[2px] border-[1.5px] ${batteryColor.border} items-end`"> <!-- Halved dimensions -->
       <!-- Battery fill (dynamic height) -->
       <div
-        class="bg-foreground w-full"
+        :class="`${batteryColor.bg} w-full`"
         :style="{ height: Math.max(percentage, 5) + '%' }"
       />
       
