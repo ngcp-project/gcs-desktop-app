@@ -22,12 +22,7 @@ const currentVehicleStage =
     ? null
     : vehicle.stages.find((stage) => stage.stage_id === vehicle.current_stage);
 
-const patientStatusStyles = {
-  statusColor: {
-    Secured: "text-chart-2 font-semibold",
-    Unsecured: "text-destructive font-semibold"
-  }
-};
+//NOTE: Survivor/patient status display moved to SurvivorStatusCard component
 </script>
 
 <template>
@@ -50,14 +45,6 @@ const patientStatusStyles = {
         Stage: {{ currentVehicleStage?.stage_name }}
       </span>
       <span v-else class="font-semibold">No Stages Available</span>
-
-      <!-- MEA & ERU are the only vehicles with patient status -->
-      <span v-if="vehicle.patient_status !== null" class="font-semibold">
-        Patient Status:
-        <span :class="patientStatusStyles.statusColor[vehicle.patient_status]">
-          {{ vehicle.patient_status }}
-        </span>
-      </span>
     </CardContent>
 
     <!-- Next Stage Button -->
