@@ -45,14 +45,14 @@ const patientStatusStyles = {
           vehicle.stages.length > 0 &&
           (currentVehicleStage !== null || currentVehicleStage !== undefined)
         "
-        class="font-semibold"
+        class="font-semibold current-stage"
       >
         Stage: {{ currentVehicleStage?.stage_name }}
       </span>
-      <span v-else class="font-semibold">No Stages Available</span>
+      <span v-else class="font-semibold current-stage">No Stages Available</span>
 
       <!-- MEA & ERU are the only vehicles with patient status -->
-      <span v-if="vehicle.patient_status !== null" class="font-semibold">
+      <span v-if="vehicle.patient_status !== null" class="font-semibold current-status">
         Patient Status:
         <span :class="patientStatusStyles.statusColor[vehicle.patient_status]">
           {{ vehicle.patient_status }}
@@ -64,7 +64,7 @@ const patientStatusStyles = {
     <CardFooter class="mt-4 justify-start">
       <!-- TODO: Add logic to disable if vehicle is at last stage or if mission is not submitted or not started-->
       <Button
-        :disabled="vehicle.stages.length < 1 || vehicle.current_stage === vehicle.stages[vehicle.stages.length - 1].stage_id"
+        class="next-stage-button" :disabled="vehicle.stages.length < 1 || vehicle.current_stage === vehicle.stages[vehicle.stages.length - 1].stage_id"
         @click.stop="missionStore.transitionStage(missionId, props.vehicleName)">
         Next Stage
       </Button>
