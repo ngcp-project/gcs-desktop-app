@@ -10,6 +10,11 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      pythonEnv = pkgs.python3.withPackages (python-pkgs: with python-pkgs; [
+        flask
+        opencv-python
+        pyinstaller
+      ]);
     in
     {
       devShells.${system}.default = pkgs.mkShell {
@@ -31,6 +36,7 @@
           dbus
           openssl_3
           librsvg
+          pythonEnv
         ];
 
         # Required for Tauri to find libraries at runtime

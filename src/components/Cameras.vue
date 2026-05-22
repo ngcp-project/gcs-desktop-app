@@ -17,7 +17,7 @@ const selectedIndex = ref(0);
 import { Skeleton } from "@/components/ui/skeleton";
 
 const cameraFeeds = ref([
-  { id: 1, name: "MRA", src: "http://127.0.0.1:5000/video_feed" },
+  //{ id: 1, name: "MRA", src: "http://127.0.0.1:5000/video_feed" },
   { id: 2, name: "ERU", src: "http://127.0.0.1:5000/video_feed" }
 ]);
 
@@ -69,8 +69,19 @@ whenever(emblaMainApi, (api) => {
 </script>
 
 <template>
+  <!-- Single Camera Layout -->
+  <div class="focused-camera">
+    <p class="text-center text-xl font-semibold">{{ cameraFeeds[0].name }}</p>
+    <Card class="cursor-pointer">
+      <CardContent class="flex p-0">
+        <Skeleton class="aspect-[4/3] w-full" v-if="!cameraFeeds[0].src" />
+        <img class="image" :src="cameraFeeds[0].src" :alt="cameraFeeds[0].name" v-if="cameraFeeds[0].src" />
+      </CardContent>
+    </Card>
+  </div>
+
   <!-- Side-by-Side (Grid) Layout -->
-  <div class="grid-container" v-if="layout === 'grid'">
+  <!--<div class="grid-container" v-if="layout === 'grid'">
     <div v-for="feed in cameraFeeds" :key="feed.id">
       <div class="camera">
         <p class="text-center text-xl font-semibold">{{ feed.name }}</p>
@@ -88,10 +99,10 @@ whenever(emblaMainApi, (api) => {
         </Card>
       </div>
     </div>
-  </div>
+  </div>-->
 
   <!-- Carousel Layout -->
-  <div class="carousel-container" v-else-if="layout === 'carousel'">
+  <!-- <div class="carousel-container" v-else-if="layout === 'carousel'">
     <Carousel class="p-5" @init-api="(val) => (emblaMainApi = val)" :plugins="[Fade()]">
       <CarouselContent>
         <CarouselItem v-for="feed in cameraFeeds" :key="feed.id">
@@ -106,10 +117,10 @@ whenever(emblaMainApi, (api) => {
           </div>
         </CarouselItem>
       </CarouselContent>
-    </Carousel>
+    </Carousel>  -->
 
     <!-- Carousel Thumbnails -->
-    <Carousel
+    <!-- <Carousel
       class="relative max-w-md"
       :opts="{ watchDrag: false }"
       @init-api="(val) => (emblaThumbnailApi = val)"
@@ -136,7 +147,7 @@ whenever(emblaMainApi, (api) => {
         </CarouselItem>
       </CarouselContent>
     </Carousel>
-  </div>
+  </div> -->
 </template>
 
 <style lang="css" scoped>
