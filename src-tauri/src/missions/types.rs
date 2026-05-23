@@ -18,6 +18,7 @@ pub struct MissionStruct {
     pub mission_status: MissionStageStatusEnum,
     pub vehicles: VehiclesStruct,
     pub zones: ZonesStruct,
+    pub survivor_coordinate: Option<GeoCoordinateStruct>, //in-memory only for now
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize, Clone, specta::Type)]
@@ -69,6 +70,7 @@ impl VehicleEnum {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize, Clone, specta::Type)]
 pub enum PatientStatusEnum {
+    Located,
     Secured,
     Unsecured,
 }

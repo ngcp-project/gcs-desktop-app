@@ -24,12 +24,12 @@ const engagedVehicleNames = computed(() => {
   
   return engaging_vehicles.filter((vehicleName) => {
     const vehicle = currentMission.value?.vehicles[vehicleName];
-    //currently only "Secured" shows engagement, "Located" will be added later
-    return vehicle?.patient_status === "Secured";
+    // Now checks for both Located and Secured
+    return vehicle?.patient_status === "Located" || 
+           vehicle?.patient_status === "Secured";
   });
 });
 
-//TODO:add "Located" check once rust updates are made
 const overallStatus = computed(() => {
   if (!currentMission.value) return "Unsecured";
   
@@ -39,13 +39,18 @@ const overallStatus = computed(() => {
   
   if (hasSecured) return "Secured";
   
+  //check for Located status
+  const hasLocated = engaging_vehicles.some(
+    (v) => currentMission.value?.vehicles[v]?.patient_status === "Located"
+  );
+  
+  if (hasLocated) return "Located";
+  
   return "Unsecured";
 });
 
-//placeholder for survivor coordinates, TODO:replace with actual data once survivor_coordinate field is added
-const survivorCoordinates = computed<{ lat: number; long: number } | null>(() => {
-  //will be available as currentMission.value?.survivor_coordinate
-  return null;
+const survivorCoordinates = computed(() => {
+  return currentMission.value?.survivor_coordinate || null;
 });
 //format engaged vehicles for display
 const engagedVehiclesText = computed(() => {

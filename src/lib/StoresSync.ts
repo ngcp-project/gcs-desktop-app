@@ -4,6 +4,7 @@ import { mapPiniaStore } from "./MapStore";
 import { telemetryPiniaStore } from "./TelemetryStore";
 import { VehicleTelemetryData } from "./bindings";
 import { checkAlerts } from "./alertMonitoring"; 
+import { listen } from "@tauri-apps/api/event";
 
 //Declare store variables:
 let missionStore: ReturnType<typeof missionPiniaStore>;
@@ -45,6 +46,48 @@ export const establishTaurpcConnection = () => {
   taurpc.telemetry.on_updated.on((data: VehicleTelemetryData) => {
     console.log("PINIA: Telemetry data updated", data);
     telemetryStore.syncRustState(data);
+  });
+  
+  //survivor status update listener, status updates emitted from process.rs
+  //updates mission state in-memory for now (integrate with db in the future)
+  listen("survivor_status_update", (event) => {
+    const { mission_id, vehicle, status, coordinate } = event.payload as {
+      mission_id: number;
+      vehicle: string;
+      status: string;
+      coordinate: { lat: number; long: number };
+    };
+    console.log("PINIA: Survivor status update received:", event.payload);
+    
+    //get current mission state
+    const currentState = missionStore.missionState;
+    if (!currentState) {
+      console.warn("Survivor update received but no mission state available");
+      return;
+    }
+  
+    //find mission to update
+    const mission = currentState.missions.find((m) => m.mission_id === mission_id);
+    if (!mission) {
+      console.warn(`Survivor update received for unknown mission_id: ${mission_id}`);
+      return;
+    }
+  
+    //update survivor coordinate on the mission
+    mission.survivor_coordinate = {
+      lat: coordinate.lat,
+      long: coordinate.long
+    };
+  
+    //update appropriate vehicle's patient_status
+    const vehicleKey = vehicle as "MEA" | "ERU" | "MRA";
+    if (mission.vehicles[vehicleKey]) {
+      //cast status to the enum type (Located | Secured | Unsecured)
+      mission.vehicles[vehicleKey].patient_status = status as typeof mission.vehicles[typeof vehicleKey]["patient_status"];
+    }
+
+    //syncing the updated state
+    missionStore.syncRustState(currentState);
   });
 
   // =============================================
