@@ -40,7 +40,7 @@ const currentVehicleStage =
           vehicle.stages.length > 0 &&
           (currentVehicleStage !== null || currentVehicleStage !== undefined)
         "
-        class="font-semibold"
+        class="font-semibold current-stage"
       >
         Stage: {{ currentVehicleStage?.stage_name }}
       </span>
@@ -51,7 +51,7 @@ const currentVehicleStage =
     <CardFooter class="mt-4 justify-start">
       <!-- TODO: Add logic to disable if vehicle is at last stage or if mission is not submitted or not started-->
       <Button
-        :disabled="vehicle.stages.length < 1 || vehicle.current_stage === vehicle.stages[vehicle.stages.length - 1].stage_id"
+        class="next-stage-button" :disabled="vehicle.stages.length < 1 || vehicle.current_stage === vehicle.stages[vehicle.stages.length - 1].stage_id"
         @click.stop="missionStore.transitionStage(missionId, props.vehicleName)">
         Next Stage
       </Button>

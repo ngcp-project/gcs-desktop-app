@@ -8,7 +8,7 @@ import {
   ZoneType,
   StageStruct
 } from "@/lib/bindings";
-import { Coordinates } from "@/components/map/MapCoordinates.vue";
+import { Coordinates } from "@/components/map/MapCoordinates";
 import { missionPiniaStore } from "./MissionStore";
 import {
   ZoneLayer,
@@ -35,6 +35,7 @@ const TILE_URL = "http://localhost:8080/tile/{z}/{x}/{y}.png";
 // =============================================
 // Store Implementation
 // =============================================
+const maxVertices = 5;
 export const mapPiniaStore = defineStore('map', () => {
   const mapState = ref<MapState>({
     map: null,
@@ -85,9 +86,8 @@ export const mapPiniaStore = defineStore('map', () => {
   const logMapStore = () => {
     console.log(mapState);
   };
-  const hello = missionPiniaStore();
-  console.log("Asdasdsadasd", hello);
-  // // Layer Management Methods
+
+  // Layer Management Methods
   const updateZonePolygon = (missionId: number, type: ZoneType, zoneIndex: number) => {
     const map = mapState.value.map?.leafletObject;
     if (!map) return;
@@ -95,32 +95,43 @@ export const mapPiniaStore = defineStore('map', () => {
     const layerTrackedZone =
       mapState.value.layerTracking.missions[missionId].zones[type][zoneIndex];
 
-    // not pushing in zonelayer type, pushing in empty object or L.Polygon layer
-    if (!layerTrackedZone || Object.keys(layerTrackedZone).length === 0) {
-      // If layerTrackedZone isnt initialized enable Geoman draw mode
-      map.pm.enableDraw("Polygon");
-      // .once will ensure that theres only 1 create event listener per function call
-      map.once("pm:create", (e) => {
-        // Store newly created Geoman layer
-        const layer = e.layer as L.Polygon;
-
-        // Get latLngs of create polygon
-        const latlngs = layer.getLatLngs()[0] as L.LatLng[];
-
-        // Convert leaflet latlng to our GeoCoordinateStruct[]
+      const createPolygon = (latlngs: L.LatLng[]  ) => {
         const geoCoordinateStructs: GeoCoordinateStruct[] = latlngs.map((latlng) => ({
           lat: latlng.lat,
           long: latlng.lng
         }));
-
-        // Update the zone in the mission store with new geoCoordinates
+        // Store newly created Geoman layer
         missionStore.updateZone(missionId, type, zoneIndex, geoCoordinateStructs);
+        map.pm.disableDraw();
+      }
+
+    // not pushing in zonelayer type, pushing in empty object or L.Polygon layer
+    if (!layerTrackedZone || Object.keys(layerTrackedZone).length === 0) {
+
+      //terminate editing and auto complete when vertices === maxVertices
+      let vertices = 0;
+      map.once("pm:drawstart", ({ workingLayer }) => {
+        const polygon = workingLayer as L.Polygon;
+        polygon.on("pm:vertexadded", () => {
+          vertices++;
+          if (vertices === maxVertices) {
+            createPolygon(polygon.getLatLngs() as L.LatLng[]);
+            //nuke "pm:create" event listener to prevent layer overrides
+            map.off("pm:create");
+          }
+        });
+      });
+      map.pm.enableDraw("Polygon");
+      // .once will ensure that theres only 1 create event listener per function call
+      map.once("pm:create", (e) => {
+        const layer = e.layer as L.Polygon;
+        createPolygon(layer.getLatLngs()[0] as L.LatLng[]);
         // Delete newly created layer since we want to create polygons from layerTracking
         layer.remove();
       });
     } else {
       // Zone has Polygon, so we can edit it
-      const editedLayer = (layerTrackedZone as ZoneLayer).layer;
+      const editedLayer = (layerTrackedZone as ZoneLayer).layer as L.Polygon;
 
       // TODO: possibly add another ui element to explicitly mark when editing is done
       // toggle the edit mode to allow show completing the zone
@@ -129,8 +140,22 @@ export const mapPiniaStore = defineStore('map', () => {
         return;
       }
 
+      const getVertexCount = (polygon : L.Polygon) => {
+        return (polygon.getLatLngs()[0] as L.LatLng[]).length;
+      }
+      const hideMarkers = () => {
+        (editedLayer.pm as any)._createMiddleMarker = () => {};
+      }
+      //disable middle markers if polygon-vertices >= maxVertices
+      if (getVertexCount(editedLayer) >= maxVertices)
+          hideMarkers();
+
       // enable edit mode on the selected polygon
-      editedLayer.pm.enable();
+      editedLayer.pm.enable({addVertexValidation : ({layer}) => {
+        const count = getVertexCount(layer as L.Polygon)
+        // restrict user from adding more vertices if verticeCount >= maxVertices.
+        return (count  < maxVertices)
+      }});
 
       // listen to when the layer edit is complete
       editedLayer.once("pm:update", (e) => {

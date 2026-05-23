@@ -18,7 +18,7 @@ describe("Map annotations", () => {
     await driver.quit();
   });
 
-  const pauseDuration = 25;
+  const pauseDuration = 50;
 
   it("should create a new mission", async () => {
     await driver.findElement(By.css('button.add-mission-button')).click();
@@ -96,11 +96,13 @@ describe("Map annotations", () => {
 
       // hidden
       await zone.findElement(By.css('svg.toggle-zone-button')).click();
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
       expect(await zoneMapPath.getAttribute('stroke-opacity')).to.equal('0');
       expect(await zoneMapPath.getAttribute('fill-opacity')).to.equal('0');
 
       // shown
       await zone.findElement(By.css('svg.toggle-zone-button')).click();
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
       expect(await zoneMapPath.getAttribute('stroke-opacity')).to.equal('1');
       expect(await zoneMapPath.getAttribute('fill-opacity')).to.equal('0.2');
     });
@@ -137,9 +139,11 @@ describe("Map annotations", () => {
       // the element reference still exists even if the element gets deleted,
       // but "waiting" for staleness does check if it's removed
       await driver.wait(until.stalenessOf(vertex), pauseDuration);
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
 
       await zone.findElement(By.css('svg.setup-zone-button')).click();
       await driver.wait(until.stalenessOf(vertexList[0]), pauseDuration); // all items in vertexList should no longer exist at this point
+      await driver.sleep(pauseDuration); // wait a tick to ensure list updates
     });
 
     it(`should delete the created ${name} zone`, async () => {
