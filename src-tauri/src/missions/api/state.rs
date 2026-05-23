@@ -110,6 +110,7 @@ impl MissionApiImpl {
                             is_auto: mea_row.get("is_auto"),
                             patient_status: 
                                 match mea_row.get::<String, _>("patient_status").as_str() {
+                                    "Located" => Some(PatientStatusEnum::Located),
                                     "Unsecured" => Some(PatientStatusEnum::Unsecured),
                                     "Secured" => Some(PatientStatusEnum::Secured),
                                     _ => Some(PatientStatusEnum::Unsecured),
@@ -154,6 +155,7 @@ impl MissionApiImpl {
                             is_auto: eru_row.get("is_auto"),
                             patient_status: 
                                 match eru_row.get::<String, _>("patient_status").as_str() {
+                                    "Located" => Some(PatientStatusEnum::Located),
                                     "Unsecured" => Some(PatientStatusEnum::Unsecured),
                                     "Secured" => Some(PatientStatusEnum::Secured),
                                     _ => Some(PatientStatusEnum::Unsecured),
@@ -198,6 +200,7 @@ impl MissionApiImpl {
                             is_auto: mra_row.get("is_auto"),
                             patient_status:
                                 match mra_row.get::<String, _>("patient_status").as_str() {
+                                    "Located" => Some(PatientStatusEnum::Located),
                                     "Unsecured" => Some(PatientStatusEnum::Unsecured),
                                     "Secured" => Some(PatientStatusEnum::Secured),
                                     _ => Some(PatientStatusEnum::Unsecured),
@@ -258,6 +261,7 @@ impl MissionApiImpl {
                                 })
                                 .collect(),
                     },
+                    survivor_coordinate: None, //set in-memory when telemetry indicates survivor found
                 });
                 // Populate runtime KEEP_OUT_ZONES map from persisted mission keep_out_zones
                 {
@@ -324,6 +328,7 @@ impl MissionApiImpl {
                 keep_in_zones: vec![],
                 keep_out_zones: vec![],
             },
+            survivor_coordinate: None,
         }
     }
 }

@@ -72,6 +72,39 @@ pub async fn process_telemetry(
                         }
                     }
 
+                    //survivor status detection
+                    if let Some(patient_secured) = data.request_coordinate.patient_secured {
+                        let active_mission_id = *LAST_STATE.lock().await;
+                        //only process if there's an active mission
+                        if active_mission_id != -1 {
+                            let new_status = if patient_secured {
+                                "Secured"
+                            } else {
+                                "Located"  //vehicle found survivor but not secured yet
+                            };
+                            let survivor_lat = data.request_coordinate.request_location.latitude;
+                            let survivor_long = data.request_coordinate.request_location.longitude;
+                            let vehicle_name_upper = data.vehicle_id.to_uppercase();
+                            println!("Survivor status update for {} in mission {}: {} at ({}, {})", vehicle_name_upper, active_mission_id, new_status, survivor_lat, survivor_long);
+                            //emit event with all necessary data
+                            if let Some(app_handle) = &app_handle {
+                                let payload = json!({
+                                    "mission_id": active_mission_id,
+                                    "vehicle": vehicle_name_upper,
+                                    "status": new_status,
+                                    "coordinate": {
+                                        "lat": survivor_lat,
+                                        "long": survivor_long
+                                    }
+                                });
+                                if let Err(e) = app_handle.emit("survivor_status_update", &payload) {
+                                    println!("Failed to emit survivor status update: {}", e);
+                                }
+                            }
+                        }
+                    }
+
+
                     let vehicle_id = data.vehicle_id.clone();
                     state
                         .lock()
