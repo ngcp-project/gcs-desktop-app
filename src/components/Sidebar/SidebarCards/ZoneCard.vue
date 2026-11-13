@@ -3,6 +3,15 @@ import { Card, CardContent, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { computed, ref, watch } from "vue";
 import { Trash2, Eye, EyeOff, Pencil, Square, Plus, Check } from "lucide-vue-next";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 import { missionStore } from "@/lib/StoresSync";
 import { ZoneType } from "@/lib/bindings";
 import { mapStore } from "@/lib/StoresSync";
@@ -100,7 +109,7 @@ const handleCreateZone = (index: number) => {
     <CardContent class="mt-2 flex flex-col items-start space-y-3">
       <div
         v-for="(zone, index) in zones"
-        :key="props.zoneType"
+        :key="`${props.zoneType}-${index}`"
         class="flex w-full items-center justify-between pb-1 pt-1"
       >
         <span class="font-semibold flex items-center gap-2">
@@ -125,13 +134,45 @@ const handleCreateZone = (index: number) => {
             @click="toggleVisibility(index)"
             class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
           />
-          <Trash2
-           
+
+
+          <Dialog
             v-if="mission?.mission_status !== 'Complete' && currentMissionId !== null"
-            @click="handleDeleteZone(index)"
-            class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
-          
-          />
+          >
+            <DialogTrigger as-child>
+              <Trash2
+                @click.stop
+                class="h-5 w-5 cursor-pointer text-gray-700 hover:text-gray-500"
+              />
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Zone</DialogTitle>
+              </DialogHeader>
+
+              <p>
+              Are you sure you want to delete Keep-{{ zoneType }} Zone {{ index }}?
+              </p>
+
+              <DialogFooter>
+                <DialogClose as-child>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+
+                <DialogClose as-child>
+                  <Button
+                  variant="destructive"
+                  @click.stop="handleDeleteZone(index)"
+                  >
+                    Delete
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+
+          </Dialog>
+
         </div>
       </div>
     </CardContent>

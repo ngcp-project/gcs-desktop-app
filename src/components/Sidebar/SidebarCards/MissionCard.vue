@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { computed } from "vue";
 import { Trash2 } from "lucide-vue-next";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { missionStore } from "@/lib/StoresSync";
 import { event } from "@tauri-apps/api";
 
@@ -51,12 +52,34 @@ const handleMissionNameChange = (event: Event) => {
       </span>
 
       <!-- Trash Icon -->
-      <div v-if="mission.mission_status == 'Inactive'" class="cursor-pointer">
-        <Trash2
-          @click.stop="missionStore.deleteMission(mission.mission_id)"
-          class="h-5 w-5 text-foreground hover:text-destructive"
-        />
-      </div>
+      <Dialog v-if="mission.mission_status === 'Inactive'">
+        <DialogTrigger as-child>
+          <Trash2 
+            @click.stop
+            class="h-5 w-5 text-foreground hover:text-destructive"
+            />
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Mission</DialogTitle>
+          </DialogHeader>
+          <p>
+            Are you sure you want to delete {{ mission.mission_name }}?
+          </p>
+          <DialogFooter>
+            <DialogClose as-child>
+              <Button variant = "outline">Cancel</Button>
+            </DialogClose>
+            <DialogClose as-child>
+              <Button
+                variant="destructive"
+                @click.stop="missionStore.deleteMission(mission.mission_id)"
+              >Delete</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </CardTitle>
 
     <!-- Status Section -->

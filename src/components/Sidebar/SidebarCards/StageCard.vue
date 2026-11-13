@@ -3,8 +3,19 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ref, watch } from "vue";
 import { Trash2, Eye, EyeOff, Pencil, Plus, Check } from "lucide-vue-next";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 import { missionStore } from "@/lib/StoresSync";
 import { mapStore } from "@/lib/StoresSync";
+import Button from "@/components/ui/button/Button.vue";
+
 
 const props = defineProps<{
   stageID: number;
@@ -118,11 +129,43 @@ const handleEditStage = () => {
       </span>
 
       <!-- Trash Icon -->
-      <Trash2
+      <Dialog
         v-if="stage.stage_status === 'Inactive' && currentMissionId !== null && currentVehicleName !== null"
-        @click="handleDeleteStage"
-        class="h-5 w-5 cursor-pointer text-foreground hover:text-destructive"
-      />
+      >
+        <DialogTrigger as-child>
+          <Trash2
+            @click.stop
+            class="h-5 w-5 cursor-pointer text-foreground hover:text-destructive"
+            />
+        </DialogTrigger>
+
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Stage</DialogTitle>
+          </DialogHeader>
+
+          <p>
+            Are you sure you want to delete {{ stage.stage_name }}?
+          </p>
+          <DialogFooter>
+            <DialogClose as-child>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+
+            <DialogClose as-child>
+              <Button
+                variant="destructive"
+                @click.stop="handleDeleteStage"
+              >
+                Delete
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
     </CardTitle>
 
     <!-- Status Section -->
